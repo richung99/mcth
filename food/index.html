@@ -13,27 +13,34 @@
 				<img src="../img/TV-menu-food.png" alt="Food menu" />
 			</main>
 		</div>
-		<script>
+	<script>
 		const btn = document.getElementById("fs-btn");
-
-		// Request fullscreen
-		btn.addEventListener("click", () => {
-		    document.documentElement.requestFullscreen();
+	
+		btn.addEventListener("click", async () => {
+			try {
+				if (!document.fullscreenElement) {
+					await document.documentElement.requestFullscreen();
+				}
+			} catch (e) {
+				console.error(e);
+			}
 		});
-
-		// Handle fullscreen change events
+	
 		document.addEventListener("fullscreenchange", () => {
-		    if (document.fullscreenElement) {
-		        // ENTERED fullscreen → hide button
-		        btn.style.opacity = "0";
-		        btn.style.pointerEvents = "none";
-		    } else {
-		        // EXITED fullscreen → show button
-		        btn.style.opacity = "1";
-		        btn.style.pointerEvents = "auto";
-		    }
+			const fs = !!document.fullscreenElement;
+	
+			if (fs) {
+				// in fullscreen: hide button & force no scrollbars
+				btn.classList.add("hidden");
+				document.documentElement.style.overflow = "hidden";
+			} else {
+				// exited fullscreen: show button again
+				btn.classList.remove("hidden");
+				document.documentElement.style.overflow = "hidden";
+			}
 		});
-		</script>
+	</script>
 	</body>
 </html>
+
 
