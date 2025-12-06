@@ -1,2 +1,2 @@
-# mrchicksteahouse
-Landing Page for Mr Chick Tea House
+# Mr. Chick's Tea House
+Simple TV Menu
