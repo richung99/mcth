@@ -9,39 +9,122 @@
 	<body>
 		<!--<button id="fs-btn">⛶ Full Screen</button>-->
 		<div class="menu-wrapper">
-			<main class="menu-screen">
-				<img src="../img/TV-menu-drink.png" alt="">
+			<main class="menu-screen video-playlist">
+				<!-- Two stacked players: one is on screen while the other loads the next video,
+				     so there is no black flash between clips. -->
+				<video class="menu-video is-active" muted playsinline preload="auto" poster="../img/TV-menu-drink.png"></video>
+				<video class="menu-video" muted playsinline preload="auto"></video>
 			</main>
 		</div>
 		<script>
-		const btn = document.getElementById("fs-btn");
-	
-		btn.addEventListener("click", async () => {
-			try {
-				if (!document.fullscreenElement) {
-					await document.documentElement.requestFullscreen();
+		// ---- Drink menu video playlist ----
+		// Add, remove or reorder videos here; they play in this order and loop forever.
+		const DRINK_VIDEOS = [
+			"../img/mcteahouse_menu_card_flip_instagram.mp4",
+			"../img/mcteahouse_menu_pumpkin_specials.mp4",
+		];
+
+		(function () {
+			const players = Array.from(document.querySelectorAll(".menu-video"));
+			let active = 0;   // index into players
+			let current = 0;  // index into DRINK_VIDEOS
+			let lastTime = -1;
+			let stalledFor = 0;
+
+			function load(player, src) {
+				if (player.getAttribute("src") !== src) {
+					player.src = src;
+					player.load();
+				} else {
+					player.currentTime = 0;
 				}
-			} catch (e) {
-				console.error(e);
 			}
-		});
-	
-		document.addEventListener("fullscreenchange", () => {
-			const fs = !!document.fullscreenElement;
-	
-			if (fs) {
-				// in fullscreen: hide button & force no scrollbars
-				btn.classList.add("hidden");
-				document.documentElement.style.overflow = "hidden";
-			} else {
-				// exited fullscreen: show button again
-				btn.classList.remove("hidden");
-				document.documentElement.style.overflow = "hidden";
+
+			function play(player) {
+				const p = player.play();
+				if (p && p.catch) p.catch((e) => console.warn("Video play failed:", e));
 			}
-		});
+
+			function preloadNext() {
+				const next = (current + 1) % DRINK_VIDEOS.length;
+				load(players[1 - active], DRINK_VIDEOS[next]);
+			}
+
+			function advance() {
+				current = (current + 1) % DRINK_VIDEOS.length;
+				lastTime = -1;
+				stalledFor = 0;
+
+				if (DRINK_VIDEOS.length === 1) {
+					players[active].currentTime = 0;
+					play(players[active]);
+					return;
+				}
+
+				const outgoing = players[active];
+				const incoming = players[1 - active];
+				active = 1 - active;
+
+				load(incoming, DRINK_VIDEOS[current]);
+				incoming.addEventListener("playing", function show() {
+					incoming.removeEventListener("playing", show);
+					incoming.classList.add("is-active");
+					outgoing.classList.remove("is-active");
+					outgoing.pause();
+					preloadNext();
+				});
+				play(incoming);
+			}
+
+			players.forEach((player) => {
+				player.addEventListener("ended", () => {
+					if (player === players[active]) advance();
+				});
+				player.addEventListener("error", () => {
+					console.warn("Could not load video:", player.getAttribute("src"));
+					if (player === players[active]) setTimeout(advance, 1000);
+				});
+			});
+
+			// Watchdog: if the on-screen video freezes for ~8s (TV hiccup, network blip), move on.
+			setInterval(() => {
+				const player = players[active];
+				if (player.error) return; // the "error" handler already skips this one
+				if (player.paused && !player.ended) play(player);
+				if (player.currentTime === lastTime) {
+					stalledFor += 2;
+					if (stalledFor >= 8) advance();
+				} else {
+					stalledFor = 0;
+				}
+				lastTime = player.currentTime;
+			}, 2000);
+
+			load(players[active], DRINK_VIDEOS[current]);
+			play(players[active]);
+			preloadNext();
+		})();
+
+		// ---- Optional full-screen button (only runs if the button above is uncommented) ----
+		const btn = document.getElementById("fs-btn");
+
+		if (btn) {
+			btn.addEventListener("click", async () => {
+				try {
+					if (!document.fullscreenElement) {
+						await document.documentElement.requestFullscreen();
+					}
+				} catch (e) {
+					console.error(e);
+				}
+			});
+
+			document.addEventListener("fullscreenchange", () => {
+				const fs = !!document.fullscreenElement;
+				btn.classList.toggle("hidden", fs);
+				document.documentElement.style.overflow = "hidden";
+			});
+		}
 	</script>
 	</body>
 </html>
-
-
-
