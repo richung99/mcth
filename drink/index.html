@@ -13,7 +13,7 @@
 				<!-- Holds the last frame of the previous video so there's no black flash while the next one loads -->
 				<canvas class="menu-video-hold"></canvas>
 				<!-- ONE video player that swaps files. (TV browsers often can't run two players at once.) -->
-				<video class="menu-video" muted playsinline autoplay preload="auto" poster="../img/TV-menu-drink.png"></video>
+				<video class="menu-video" muted playsinline preload="auto" poster="../img/TV-menu-drink.png"></video>
 			</main>
 		</div>
 		<div id="debug" hidden></div>
@@ -30,6 +30,7 @@
 			const hold = document.querySelector(".menu-video-hold");
 			const debugBox = document.getElementById("debug");
 			const DEBUG = /[?&]debug\b/.test(location.search);
+			video.muted = true; // muted video is allowed to start on its own (no click needed)
 			const log = [];
 
 			let current = -1;
@@ -74,8 +75,7 @@
 				note("start video " + (current + 1));
 
 				video.removeAttribute("poster");
-				video.src = DRINK_VIDEOS[current];
-				video.load();
+				video.src = DRINK_VIDEOS[current]; // setting src starts loading by itself
 				const p = video.play();
 				if (p && p.catch) p.catch((e) => note("play() refused: " + e.name));
 			}
