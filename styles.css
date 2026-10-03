@@ -73,6 +73,26 @@ body {
 	display: block;
 }
 
+/* Video playlist (drink menu): players are stacked, only the active one is visible */
+.video-playlist {
+	position: relative;
+	background: #000;
+}
+
+.menu-screen .menu-video {
+	position: absolute;
+	inset: 0;
+	width: 100vw;
+	height: 100vh;
+	object-fit: contain;   /* use 'cover' if you prefer cropping */
+	display: block;
+	visibility: hidden;
+}
+
+.menu-screen .menu-video.is-active {
+	visibility: visible;
+}
+
 
 /* ================================
    FULLSCREEN BUTTON
