@@ -79,18 +79,36 @@ body {
 	background: #000;
 }
 
-.menu-screen .menu-video {
+/* The video sits on top of a canvas that holds the previous video's last frame */
+.menu-screen .menu-video,
+.menu-screen .menu-video-hold {
 	position: absolute;
-	inset: 0;
+	top: 0;
+	left: 0;
 	width: 100vw;
 	height: 100vh;
 	object-fit: contain;   /* use 'cover' if you prefer cropping */
 	display: block;
-	visibility: hidden;
 }
 
-.menu-screen .menu-video.is-active {
-	visibility: visible;
+.menu-screen .menu-video {
+	background: transparent;
+	z-index: 1;
+}
+
+/* Status overlay, only shown when the page is opened with ?debug */
+#debug {
+	position: fixed;
+	left: 12px;
+	bottom: 12px;
+	z-index: 10;
+	padding: 10px 14px;
+	max-width: 90vw;
+	background: rgba(0, 0, 0, 0.8);
+	color: #0f0;
+	font: 14px/1.4 monospace;
+	white-space: pre-wrap;
+	border-radius: 6px;
 }
 
 
