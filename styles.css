@@ -73,15 +73,14 @@ body {
 	display: block;
 }
 
-/* Video playlist (drink menu): players are stacked, only the active one is visible */
+/* Looping menu video (drink menu). Background matches the menu's cream color,
+   so any moment before the video paints shows cream instead of black. */
 .video-playlist {
 	position: relative;
-	background: #000;
+	background: #f5efe8;
 }
 
-/* The video sits on top of a canvas that holds the previous video's last frame */
-.menu-screen .menu-video,
-.menu-screen .menu-video-hold {
+.menu-screen .menu-video {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -89,11 +88,7 @@ body {
 	height: 100vh;
 	object-fit: contain;   /* use 'cover' if you prefer cropping */
 	display: block;
-}
-
-.menu-screen .menu-video {
-	background: transparent;
-	z-index: 1;
+	background: #f5efe8;
 }
 
 /* Status overlay, only shown when the page is opened with ?debug */

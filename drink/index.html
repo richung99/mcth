@@ -10,32 +10,29 @@
 		<!--<button id="fs-btn">⛶ Full Screen</button>-->
 		<div class="menu-wrapper">
 			<main class="menu-screen video-playlist">
-				<!-- Holds the last frame of the previous video so there's no black flash while the next one loads -->
-				<canvas class="menu-video-hold"></canvas>
-				<!-- ONE video player that swaps files. (TV browsers often can't run two players at once.) -->
-				<video class="menu-video" muted playsinline preload="auto" poster="../img/TV-menu-drink.png"></video>
+				<!--
+					drink_menu_loop.mp4 is the two menu videos joined into one file
+					(card_flip_instagram, then pumpkin_specials). Playing ONE file with
+					"loop" is the only way to avoid a black flash between clips on TV
+					browsers, since they blank the screen whenever the video file changes.
+				-->
+				<video class="menu-video" src="../img/drink_menu_loop.mp4"
+					muted loop autoplay playsinline preload="auto"
+					poster="../img/TV-menu-drink.png"></video>
 			</main>
 		</div>
 		<div id="debug" hidden></div>
 		<script>
-		// ---- Drink menu video playlist ----
-		// Add, remove or reorder videos here; they play in this order and loop forever.
-		const DRINK_VIDEOS = [
-			"../img/mcteahouse_menu_card_flip_instagram.mp4",
-			"../img/mcteahouse_menu_pumpkin_specials.mp4",
-		];
-
 		(function () {
 			const video = document.querySelector(".menu-video");
-			const hold = document.querySelector(".menu-video-hold");
 			const debugBox = document.getElementById("debug");
 			const DEBUG = /[?&]debug\b/.test(location.search);
-			video.muted = true; // muted video is allowed to start on its own (no click needed)
 			const log = [];
-
-			let current = -1;
 			let lastTime = -1;
 			let stalledFor = 0;
+			let loops = 0;
+
+			video.muted = true; // muted video is allowed to start on its own (no click needed)
 
 			function note(msg) {
 				if (!DEBUG) return;
@@ -43,67 +40,38 @@
 				log.length = Math.min(log.length, 8);
 			}
 
-			function renderDebug() {
-				if (!DEBUG) return;
-				debugBox.hidden = false;
-				debugBox.textContent =
-					"Video " + (current + 1) + " of " + DRINK_VIDEOS.length + ": " +
-					DRINK_VIDEOS[current].split("/").pop() + "\n" +
-					"time " + video.currentTime.toFixed(1) + " / " + (video.duration || 0).toFixed(1) +
-					"   paused=" + video.paused + "   ready=" + video.readyState +
-					(video.error ? "   ERROR code " + video.error.code : "") + "\n\n" +
-					log.join("\n");
-			}
-
-			// Copy the frame on screen into the canvas behind the video, so the swap is seamless.
-			function holdFrame() {
-				try {
-					if (!video.videoWidth) return;
-					hold.width = video.videoWidth;
-					hold.height = video.videoHeight;
-					hold.getContext("2d").drawImage(video, 0, 0);
-				} catch (e) {
-					/* not critical */
-				}
-			}
-
-			function playNext() {
-				holdFrame();
-				current = (current + 1) % DRINK_VIDEOS.length;
-				lastTime = -1;
-				stalledFor = 0;
-				note("start video " + (current + 1));
-
-				video.removeAttribute("poster");
-				video.src = DRINK_VIDEOS[current]; // setting src starts loading by itself
+			function start() {
 				const p = video.play();
 				if (p && p.catch) p.catch((e) => note("play() refused: " + e.name));
 			}
 
-			video.addEventListener("ended", () => {
-				note("video " + (current + 1) + " ended");
-				playNext();
+			video.addEventListener("seeked", () => {
+				if (video.currentTime < 1) note("looped (" + ++loops + ")");
 			});
-
 			video.addEventListener("error", () => {
-				note("video " + (current + 1) + " failed to load (code " + (video.error && video.error.code) + ")");
-				setTimeout(playNext, 1500);
+				note("video failed to load (code " + (video.error && video.error.code) + "), retrying");
+				setTimeout(() => { video.load(); start(); }, 3000);
 			});
 
-			// Safety net: if the video stops moving for ~10s (TV hiccup, network blip),
-			// try to resume it, and if that doesn't work, go to the next video.
+			// Safety net: if the video stops moving (TV hiccup, network blip), nudge it;
+			// if it stays frozen for ~15s, reload it.
 			setInterval(() => {
-				renderDebug();
-				if (video.error) return; // the "error" handler deals with it
-				if (video.paused && !video.ended) {
-					const p = video.play();
-					if (p && p.catch) p.catch(() => {});
+				if (DEBUG) {
+					debugBox.hidden = false;
+					debugBox.textContent =
+						"drink_menu_loop.mp4   time " + video.currentTime.toFixed(1) + " / " +
+						(video.duration || 0).toFixed(1) + "   paused=" + video.paused +
+						"   ready=" + video.readyState +
+						(video.error ? "   ERROR code " + video.error.code : "") + "\n\n" + log.join("\n");
 				}
+				if (video.error) return;
+				if (video.paused) start();
 				if (video.currentTime === lastTime) {
-					stalledFor += 1;
-					if (stalledFor >= 10) {
-						note("video " + (current + 1) + " stuck at " + video.currentTime.toFixed(1) + "s, skipping");
-						playNext();
+					if (++stalledFor >= 15) {
+						note("stuck at " + video.currentTime.toFixed(1) + "s, reloading");
+						stalledFor = 0;
+						video.load();
+						start();
 					}
 				} else {
 					stalledFor = 0;
@@ -111,7 +79,7 @@
 				lastTime = video.currentTime;
 			}, 1000);
 
-			playNext();
+			start();
 		})();
 
 		// ---- Optional full-screen button (only runs if the button above is uncommented) ----
