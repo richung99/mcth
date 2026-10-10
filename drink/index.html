@@ -12,7 +12,12 @@
 			<main class="menu-screen video-playlist">
 				<!--
 					drink_menu_loop.mp4 is the two menu videos joined into one file
-					(card_flip_instagram, then pumpkin_specials). Playing ONE file with
+					(img/instagram-menu.mp4, then img/pumpkin-specials-menu.mp4).
+					When those change, rebuild it with:
+					  ffmpeg -i img/instagram-menu.mp4 -i img/pumpkin-specials-menu.mp4 -filter_complex
+					  "[0:v]fps=30,format=yuv420p,setsar=1[a];[1:v]fps=30,format=yuv420p,setsar=1[b];[a][b]concat=n=2:v=1:a=0[v]"
+					  -map "[v]" -c:v libx264 -preset slow -crf 18 -profile:v high -level 4.0 -movflags +faststart -an img/drink_menu_loop.mp4
+					Playing ONE file with
 					"loop" is the only way to avoid a black flash between clips on TV
 					browsers, since they blank the screen whenever the video file changes.
 				-->
