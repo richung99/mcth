@@ -1,0 +1,20 @@
+{
+  "video": "img/drink_menu_loop.mp4",
+  "version": "06b5e062c213",
+  "fps": 30,
+  "duration": 52.9333,
+  "promo": {
+    "start": 0,
+    "end": 17.0333
+  },
+  "menu": {
+    "start": 17.0333,
+    "end": 52.9333
+  },
+  "promoEveryMinutes": 3,
+  "sources": [
+    "img/promotion-menu.mp4",
+    "img/instagram-menu.mp4",
+    "img/pumpkin-specials-menu.mp4"
+  ]
+}
