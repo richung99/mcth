@@ -7,86 +7,26 @@
 		<link rel="stylesheet" href="../styles.css">
 	</head>
 	<body>
+		<!--
+			Drink menu TV page.
+			- What plays is set in drink/playlist.json (menu videos + promo + how often).
+			- GitHub joins those videos into img/drink_menu_loop.mp4 automatically
+			  (scripts/build_drink_video.py), and player.js jumps around inside that
+			  ONE file. TV browsers blank the screen whenever a video switches files,
+			  so one file is what keeps it from ever blinking.
+			- Open this page with ?debug to see an on-screen status box.
+		-->
 		<!--<button id="fs-btn">⛶ Full Screen</button>-->
 		<div class="menu-wrapper">
 			<main class="menu-screen video-playlist">
-				<!--
-					drink_menu_loop.mp4 is the two menu videos joined into one file
-					(img/instagram-menu.mp4, then img/pumpkin-specials-menu.mp4).
-					When those change, rebuild it with:
-					  ffmpeg -i img/instagram-menu.mp4 -i img/pumpkin-specials-menu.mp4 -filter_complex
-					  "[0:v]fps=30,format=yuv420p,setsar=1[a];[1:v]fps=30,format=yuv420p,setsar=1[b];[a][b]concat=n=2:v=1:a=0[v]"
-					  -map "[v]" -c:v libx264 -preset slow -crf 18 -profile:v high -level 4.0 -movflags +faststart -an img/drink_menu_loop.mp4
-					Playing ONE file with
-					"loop" is the only way to avoid a black flash between clips on TV
-					browsers, since they blank the screen whenever the video file changes.
-				-->
-				<video class="menu-video" src="../img/drink_menu_loop.mp4"
-					muted loop autoplay playsinline preload="auto"
+				<!-- No "loop" attribute on purpose: player.js decides what plays after each loop. -->
+				<video class="menu-video" muted playsinline preload="auto"
 					poster="../img/TV-menu-drink.png"></video>
 			</main>
 		</div>
 		<div id="debug" hidden></div>
+		<script src="player.js"></script>
 		<script>
-		(function () {
-			const video = document.querySelector(".menu-video");
-			const debugBox = document.getElementById("debug");
-			const DEBUG = /[?&]debug\b/.test(location.search);
-			const log = [];
-			let lastTime = -1;
-			let stalledFor = 0;
-			let loops = 0;
-
-			video.muted = true; // muted video is allowed to start on its own (no click needed)
-
-			function note(msg) {
-				if (!DEBUG) return;
-				log.unshift(new Date().toLocaleTimeString() + "  " + msg);
-				log.length = Math.min(log.length, 8);
-			}
-
-			function start() {
-				const p = video.play();
-				if (p && p.catch) p.catch((e) => note("play() refused: " + e.name));
-			}
-
-			video.addEventListener("seeked", () => {
-				if (video.currentTime < 1) note("looped (" + ++loops + ")");
-			});
-			video.addEventListener("error", () => {
-				note("video failed to load (code " + (video.error && video.error.code) + "), retrying");
-				setTimeout(() => { video.load(); start(); }, 3000);
-			});
-
-			// Safety net: if the video stops moving (TV hiccup, network blip), nudge it;
-			// if it stays frozen for ~15s, reload it.
-			setInterval(() => {
-				if (DEBUG) {
-					debugBox.hidden = false;
-					debugBox.textContent =
-						"drink_menu_loop.mp4   time " + video.currentTime.toFixed(1) + " / " +
-						(video.duration || 0).toFixed(1) + "   paused=" + video.paused +
-						"   ready=" + video.readyState +
-						(video.error ? "   ERROR code " + video.error.code : "") + "\n\n" + log.join("\n");
-				}
-				if (video.error) return;
-				if (video.paused) start();
-				if (video.currentTime === lastTime) {
-					if (++stalledFor >= 15) {
-						note("stuck at " + video.currentTime.toFixed(1) + "s, reloading");
-						stalledFor = 0;
-						video.load();
-						start();
-					}
-				} else {
-					stalledFor = 0;
-				}
-				lastTime = video.currentTime;
-			}, 1000);
-
-			start();
-		})();
-
 		// ---- Optional full-screen button (only runs if the button above is uncommented) ----
 		const btn = document.getElementById("fs-btn");
 

@@ -1,0 +1,54 @@
+# -----------------------------------------------------------------------------
+# build-drink-video.yml
+# Rebuilds img/drink_menu_loop.mp4 + drink/segments.json whenever a video or
+# drink/playlist.json changes on main, then commits the result back to main
+# (which republishes the site on GitHub Pages).
+# Depends on: scripts/build_drink_video.py, ffmpeg (installed below).
+# Does NOT handle: playback (drink/player.js) or the food menu.
+# -----------------------------------------------------------------------------
+name: Build drink menu video
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "img/**"
+      - "drink/playlist.json"
+      - "scripts/build_drink_video.py"
+      - ".github/workflows/build-drink-video.yml"
+  workflow_dispatch: # also lets you run it by hand from the Actions tab
+
+permissions:
+  contents: write # needed to commit the rebuilt video
+
+# If two uploads land close together, finish one build before starting the next
+concurrency:
+  group: build-drink-video
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Build combined video
+        run: python3 scripts/build_drink_video.py
+
+      # The bot's own commit does not re-trigger this workflow (GitHub never
+      # starts workflows from pushes made with the built-in GITHUB_TOKEN).
+      - name: Commit result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add img/drink_menu_loop.mp4 drink/segments.json
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git commit -m "Rebuild drink menu video (automatic)"
+          git pull --rebase
+          git push
