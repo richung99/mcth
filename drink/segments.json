@@ -11,7 +11,7 @@
     "start": 17.0333,
     "end": 52.9333
   },
-  "promoEveryMinutes": 3,
+  "promoEveryMinutes": 2,
   "sources": [
     "img/promotion-menu.mp4",
     "img/instagram-menu.mp4",
