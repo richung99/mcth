@@ -1,6 +1,6 @@
 # Code Map — Drink menu playlist with periodic promo
 Generated: 2026-10-21
-Spec summary: Keep menu/promo videos as separate files, show the promo about every 3 minutes, and never blink on the TV.
+Spec summary: Keep menu/promo videos as separate files, show the promos (taking turns) at a fixed interval, and never blink on the TV.
 
 ## How it fits together
 
@@ -14,7 +14,7 @@ You upload videos ──► drink/playlist.json (what plays, how often)
                 │                         │
                 ▼                         ▼
    img/drink_menu_loop.mp4        drink/segments.json
-   [promo][menu 1][menu 2]        where each section starts/ends
+   [promo 1][promo 2][menu 1][menu 2]        where each section starts/ends
                 │                         │
                 └──────────┬──────────────┘
                            ▼
@@ -25,7 +25,7 @@ You upload videos ──► drink/playlist.json (what plays, how often)
 ## Files
 
 ### drink/playlist.json
-Responsibility: The only file a person edits. Lists menu videos (in order), the promo video (or `null`), and `promoEveryMinutes`.
+Responsibility: The only file a person edits. Lists menu videos (in order), the `promos` list (they take turns; `[]` for none), and `promoEveryMinutes`. The older single `"promo": "file.mp4"` form still works.
 
 ### scripts/build_drink_video.py
 Responsibility: Turns the playlist into one video file plus a section map.
@@ -41,12 +41,12 @@ Responsibility: Turns the playlist into one video file plus a section map.
 | main() | Orchestrates the above, writes segments.json | — |
 
 Key design decisions:
-- **Promo first in the file.** When the promo ends it flows straight into the menu with no jump, and the menu ends at the end of the file, where the browser's `ended` event fires at exactly the right moment.
+- **Promos first in the file, in playlist order.** The last promo flows straight into the menu with no jump; any earlier one is cut to the menu by player.js the moment it ends. The menu ends at the end of the file, where the browser's `ended` event fires at exactly the right moment.
 - **Each clip encoded separately, then joined with `-c copy`.** Every section starts on a keyframe, so jumps are instant, and section boundaries are exact frame counts instead of estimates.
 - **Keyframes up to 20s apart.** The menu board is a detailed still, so every keyframe stores the whole board again. 2s spacing made the file about 4× bigger.
 
 ### drink/segments.json (generated)
-Responsibility: Tells the player the file name, build `version`, fps, and the `promo`/`menu` start and end times in seconds.
+Responsibility: Tells the player the file name, build `version`, fps, and the start/end times in seconds of each entry in `promos` and of `menu`.
 
 ### drink/player.js
 Responsibility: All playback decisions on the TV.
@@ -56,8 +56,9 @@ Responsibility: All playback decisions on the TV.
 | note() | Adds a line to the ?debug log | — |
 | play() | play() that logs instead of throwing | — |
 | fetchSegments() | Loads segments.json, bypassing caches | object or null |
-| jumpTo(name) | Seeks to a section start (+½ frame) and plays | — |
-| onEnded() | End of the menu loop: reload if there's a new build, else promo if due, else menu | — |
+| jumpTo(name, seg) | Seeks to a segment's start (+½ frame) and plays | — |
+| onEnded() | End of the menu loop: reload if there's a new build, else the next promo in the rotation if one is due, else menu | — |
+| promoEnded() | Every 50ms while a promo plays: when it finishes, jump to the menu (unless it's the last promo, which flows into it) | — |
 | checkForUpdate() | Every 5 min: if the build version changed, flag a reload | — |
 | renderDebug() | Draws the ?debug overlay | — |
 | watchdog() | Every 1s: resume if paused, handle a missed `ended`, reload the video if frozen 15s | — |

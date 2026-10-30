@@ -8,13 +8,13 @@ The drink menu TV plays the videos listed in `drink/playlist.json`:
 ```json
 {
   "menu": ["img/instagram-menu.mp4", "img/pumpkin-specials-menu.mp4"],
-  "promo": "img/promotion-menu.mp4",
-  "promoEveryMinutes": 3
+  "promos": ["img/promotion-menu.mp4", "img/fall-specials-menu.mp4"],
+  "promoEveryMinutes": 2
 }
 ```
 
 - **menu**: played in order, on repeat.
-- **promo**: played once `promoEveryMinutes` have passed, at the end of the current menu loop (so it shows up between 3:00 and about 3:36 apart). Set it to `null` for no promo.
+- **promos**: take turns, one every `promoEveryMinutes`, in the order listed (promo 1, promo 2, promo 1, ...). Each one plays at the end of the current menu loop, so they come a bit later than the interval (up to the length of a menu loop, about 36s). Use `[]` for no promos. To add another promo, add its file name to the list.
 
 ### Changing a video
 

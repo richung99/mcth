@@ -3,6 +3,9 @@
     "img/instagram-menu.mp4",
     "img/pumpkin-specials-menu.mp4"
   ],
-  "promo": "img/promotion-menu.mp4",
+  "promos": [
+    "img/promotion-menu.mp4",
+    "img/fall-specials-menu.mp4"
+  ],
   "promoEveryMinutes": 2
 }

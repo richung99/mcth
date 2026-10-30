@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // player.js
 // Plays the drink menu on the TV: loops the menu section of the combined video
-// and, every few minutes, plays the promo section instead — all inside ONE
+// and, every few minutes, plays the next promo (they take turns) — all inside ONE
 // video file, so the TV never blinks. Also picks up new builds automatically.
 // Depends on: drink/segments.json + img/drink_menu_loop.mp4 (both written by
 //   scripts/build_drink_video.py), the <video class="menu-video"> in index.html.
@@ -21,7 +21,9 @@
 	const log = [];
 
 	let segments = null;       // contents of segments.json, or null if unavailable
-	let section = "menu";      // which section is on screen: "menu" or "promo"
+	let section = "menu";      // which section is on screen: "menu" or "promo 1", "promo 2"...
+	let promoIndex = 0;        // which promo plays next (they alternate in playlist order)
+	let activePromo = null;    // the promo segment currently playing, or null
 	let nextPromoAt = Infinity; // Date.now() value after which the promo is due
 	let reloadPending = false; // a new build exists; reload at the next loop end
 	let lastTime = -1;
@@ -67,6 +69,7 @@
 	 * Jump to the start of a section and keep playing.
 	 *
 	 * @param name - "menu" or "promo".
+	 * @param seg  - The segment ({start, end}) to jump to.
 	 *
 	 * @remarks
 	 * Seeks half a frame past the section start. The start times in
@@ -75,9 +78,9 @@
 	 * Seeking inside the same file never blanks the screen: the current frame
 	 * stays up until the new one is ready. That's the whole point of one file.
 	 */
-	function jumpTo(name) {
+	function jumpTo(name, seg) {
 		section = name;
-		video.currentTime = segments[name].start + 0.5 / segments.fps;
+		video.currentTime = seg.start + 0.5 / segments.fps;
 		play();
 		note("playing " + name);
 	}
@@ -90,8 +93,9 @@
 	 * 1. A new build was found -> reload the page now. This is the one moment a
 	 *    reload is least noticeable: the board on screen matches what the new
 	 *    file starts with. (It's the only planned blink, once per update.)
-	 * 2. The promo is due -> jump back to the promo (at the start of the file).
-	 *    When it ends it flows straight into the menu, with no jump.
+	 * 2. A promo is due -> jump to the next promo in the rotation. The promos
+	 *    sit one after another at the start of the file, so promoEnded()
+	 *    (below) sends every promo except the last one back to the menu.
 	 * 3. Otherwise -> jump back to the start of the menu section.
 	 */
 	function onEnded() {
@@ -108,11 +112,15 @@
 			return;
 		}
 		// Promo due -> promo; otherwise loop the menu
-		if (segments.promo && Date.now() >= nextPromoAt) {
+		if (segments.promos.length && Date.now() >= nextPromoAt) {
 			nextPromoAt = Date.now() + segments.promoEveryMinutes * 60 * 1000;
-			jumpTo("promo");
+			const i = promoIndex;
+			promoIndex = (promoIndex + 1) % segments.promos.length;
+			activePromo = segments.promos[i];
+			jumpTo("promo " + (i + 1), activePromo);
 		} else {
-			jumpTo("menu");
+			activePromo = null;
+			jumpTo("menu", segments.menu);
 		}
 	}
 
@@ -123,6 +131,32 @@
 		if (!segments || latest.version !== segments.version) {
 			reloadPending = true;
 			note("new build " + latest.version + " will load at the next loop end");
+		}
+	}
+
+	/**
+	 * While a promo plays, notice the instant it finishes (checked every 50ms).
+	 *
+	 * @remarks
+	 * The last promo in the file runs straight into the menu on its own. Any
+	 * earlier promo is followed by the NEXT promo in the file, which we don't
+	 * want yet, so we jump to the menu start the moment it ends. Every promo
+	 * starts and ends on the plain menu board, so a jump of a frame or two
+	 * early or late is invisible, and it's a seek inside the file, so no blink.
+	 * The "ended" event can't be used for this: it only fires at the file's end.
+	 */
+	function promoEnded() {
+		if (!activePromo || video.seeking) return;
+		if (video.currentTime < activePromo.end - 0.04) return;
+
+		const finished = activePromo;
+		activePromo = null;
+		if (finished.end < segments.menu.start - 0.001) {
+			jumpTo("menu", segments.menu);
+			note("promo finished, jumped to menu");
+		} else {
+			section = "menu"; // last promo: already flowing into the menu
+			note("promo finished, back to menu");
 		}
 	}
 
@@ -137,7 +171,9 @@
 			"   ready=" + video.readyState + (video.error ? "   ERROR code " + video.error.code : "") + "\n" +
 			(segments
 				? "build " + segments.version + "   " +
-				  (segments.promo ? "next promo after this loop in ≥ " + secs + "s" : "no promo in playlist")
+				  (segments.promos.length
+					? "next: promo " + (promoIndex + 1) + " of " + segments.promos.length + " after this loop, in ≥ " + secs + "s"
+					: "no promos in playlist")
 				: "segments.json unavailable: looping whole file") +
 			(reloadPending ? "   (reload pending)" : "") + "\n\n" + log.join("\n");
 	}
@@ -155,12 +191,6 @@
 	function watchdog() {
 		renderDebug();
 		if (video.error) return; // the "error" handler deals with it
-
-		// Bookkeeping: the promo flows into the menu without any event
-		if (segments && section === "promo" && video.currentTime >= segments.promo.end) {
-			section = "menu";
-			note("promo finished, back to menu");
-		}
 
 		// Recover from missed events, pauses and freezes
 		if (video.ended) {
@@ -194,7 +224,7 @@
 
 		// Every (re)load of the file starts at the menu section
 		video.addEventListener("loadedmetadata", () => {
-			if (segments) jumpTo("menu");
+			if (segments) jumpTo("menu", segments.menu);
 			else play();
 		});
 		video.addEventListener("ended", onEnded);
@@ -211,6 +241,7 @@
 		}
 
 		setInterval(watchdog, 1000);
+		setInterval(promoEnded, 50);
 		setInterval(checkForUpdate, UPDATE_CHECK_MS);
 	}
 
