@@ -1,8 +1,8 @@
 {
   "video": "img/drink_menu_loop.mp4",
-  "version": "277b257653c2",
+  "version": "808395b1fa66",
   "fps": 30,
-  "duration": 61.7333,
+  "duration": 70.9333,
   "promos": [
     {
       "source": "img/promotion-menu.mp4",
@@ -12,12 +12,12 @@
     {
       "source": "img/fall-specials-menu.mp4",
       "start": 17.0333,
-      "end": 25.8333
+      "end": 35.0333
     }
   ],
   "menu": {
-    "start": 25.8333,
-    "end": 61.7333
+    "start": 35.0333,
+    "end": 70.9333
   },
   "promoEveryMinutes": 2,
   "sources": [
