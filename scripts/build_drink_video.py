@@ -41,7 +41,7 @@ def load_playlist(path):
         path (Path): Location of playlist.json.
 
     Returns:
-        dict: {"menu": [Path, ...], "promo": Path or None, "promoEveryMinutes": float}
+        dict: {"menu": [Path, ...], "promos": [Path, ...], "promoEveryMinutes": float}
 
     Raises:
         SystemExit: If the file is malformed or a listed video doesn't exist.
@@ -58,21 +58,25 @@ def load_playlist(path):
     if not isinstance(menu, list) or not menu:
         sys.exit('playlist.json needs a "menu" list with at least one video.')
 
-    # Validate optional promo and interval
-    promo = data.get("promo") or None
+    # Validate optional promos (a "promos" list, or the older single "promo")
+    promos = data.get("promos")
+    if promos is None:
+        promos = [data["promo"]] if data.get("promo") else []
+    if not isinstance(promos, list):
+        sys.exit('"promos" must be a list of video paths (or leave it out for no promos).')
     every = data.get("promoEveryMinutes", 3)
     if not isinstance(every, (int, float)) or every <= 0:
         sys.exit('"promoEveryMinutes" must be a positive number.')
 
     # Check every listed file exists
-    paths = [REPO_ROOT / m for m in menu] + ([REPO_ROOT / promo] if promo else [])
+    paths = [REPO_ROOT / m for m in menu] + [REPO_ROOT / pr for pr in promos]
     missing = [str(p.relative_to(REPO_ROOT)) for p in paths if not p.is_file()]
     if missing:
         sys.exit("These videos are listed in playlist.json but not in the repo: " + ", ".join(missing))
 
     return {
         "menu": [REPO_ROOT / m for m in menu],
-        "promo": REPO_ROOT / promo if promo else None,
+        "promos": [REPO_ROOT / pr for pr in promos],
         "promoEveryMinutes": every,
     }
 
@@ -154,14 +158,15 @@ def main():
     Build img/drink_menu_loop.mp4 and drink/segments.json from playlist.json.
 
     Notes:
-        Layout of the output file is [promo][menu 1][menu 2]...
-        The promo goes FIRST so that when it finishes it flows straight into
-        the menu without a jump, and the menu section ends at the end of the
-        file, where the browser's "ended" event fires at exactly the right
-        moment for the page to decide what plays next.
+        Layout of the output file is [promo 1][promo 2]...[menu 1][menu 2]...
+        The promos go FIRST, so the LAST promo flows straight into the menu
+        without a jump (the page jumps to the menu at the end of any earlier
+        promo). The menu section ends at the end of the file, where the
+        browser's "ended" event fires at exactly the right moment for the page
+        to decide what plays next.
     """
     playlist = load_playlist(PLAYLIST_PATH)
-    clips = ([playlist["promo"]] if playlist["promo"] else []) + playlist["menu"]
+    clips = playlist["promos"] + playlist["menu"]
 
     with tempfile.TemporaryDirectory() as tmp:
         workdir = Path(tmp)
@@ -188,14 +193,23 @@ def main():
         shutil.move(str(joined), out_path)
 
     # Work out section boundaries in seconds (frame counts / fps are exact)
-    promo_frames = frames[0] if playlist["promo"] else 0
+    promos, start = [], 0
+    for i, src in enumerate(playlist["promos"]):
+        end = start + frames[i]
+        promos.append({
+            "source": str(src.relative_to(REPO_ROOT).as_posix()),
+            "start": round(start / FPS, 4),
+            "end": round(end / FPS, 4),
+        })
+        start = end
+    menu_start = start
     segments = {
         "video": OUTPUT_VIDEO,
         "version": short_hash(out_path),
         "fps": FPS,
         "duration": round(total / FPS, 4),
-        "promo": {"start": 0, "end": round(promo_frames / FPS, 4)} if playlist["promo"] else None,
-        "menu": {"start": round(promo_frames / FPS, 4), "end": round(total / FPS, 4)},
+        "promos": promos,
+        "menu": {"start": round(menu_start / FPS, 4), "end": round(total / FPS, 4)},
         "promoEveryMinutes": playlist["promoEveryMinutes"],
         "sources": [str(c.relative_to(REPO_ROOT).as_posix()) for c in clips],
     }

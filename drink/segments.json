@@ -1,19 +1,28 @@
 {
   "video": "img/drink_menu_loop.mp4",
-  "version": "698d17099f34",
+  "version": "a6a69f14c44f",
   "fps": 30,
-  "duration": 52.9333,
-  "promo": {
-    "start": 0,
-    "end": 17.0333
-  },
+  "duration": 61.7333,
+  "promos": [
+    {
+      "source": "img/promotion-menu.mp4",
+      "start": 0.0,
+      "end": 17.0333
+    },
+    {
+      "source": "img/fall-specials-menu.mp4",
+      "start": 17.0333,
+      "end": 25.8333
+    }
+  ],
   "menu": {
-    "start": 17.0333,
-    "end": 52.9333
+    "start": 25.8333,
+    "end": 61.7333
   },
   "promoEveryMinutes": 2,
   "sources": [
     "img/promotion-menu.mp4",
+    "img/fall-specials-menu.mp4",
     "img/instagram-menu.mp4",
     "img/pumpkin-specials-menu.mp4"
   ]
