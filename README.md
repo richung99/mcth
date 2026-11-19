@@ -39,3 +39,7 @@ Needs Python 3 and ffmpeg: `python3 scripts/build_drink_video.py`
 ### Regenerating the menu video (flipping logo card)
 
 `img/instagram-menu.mp4` is generated from `img/TV-menu-drink.png`: the logo card flips to the website/Instagram card and back. To change the board, edit the PNG; to change the card text, edit `scripts/flipcard/card.html`. Then run `python3 scripts/flipcard/render_flip_video.py img/instagram-menu.mp4` (needs Python `playwright` with Chromium, and ffmpeg) and push; the Action rebuilds the TV loop.
+
+### Food menu
+
+The food page works the same way: `food/playlist.json` lists the food board (`img/TV-menu-food.png`, a still image is fine) and the promo (`img/promotion-menu-food.mp4`, the THIRTEEN promo with the boba stinger over the food board). GitHub builds `img/food_menu_loop.mp4`. Changing `TV-menu-food.png` rebuilds it automatically. Hand build: `python3 scripts/build_drink_video.py food`.

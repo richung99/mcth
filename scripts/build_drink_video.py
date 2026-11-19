@@ -10,7 +10,7 @@ from pathlib import Path
 # -----------------------------------------------------------------------------
 # build_drink_video.py
 # Joins the drink menu videos listed in drink/playlist.json into ONE video file
-# (img/drink_menu_loop.mp4) and writes drink/segments.json, which tells the
+# (img/<page>_menu_loop.mp4) and writes <page>/segments.json, which tells the
 # drink page where the promo and menu sections start and end inside that file.
 # Depends on: ffmpeg + ffprobe on PATH, Python 3.8+ standard library only.
 # Does NOT handle: playback or promo timing (drink/index.html does that), or
@@ -22,9 +22,14 @@ from pathlib import Path
 # no blink at all.
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-PLAYLIST_PATH = REPO_ROOT / "drink" / "playlist.json"
-SEGMENTS_PATH = REPO_ROOT / "drink" / "segments.json"
-OUTPUT_VIDEO = "img/drink_menu_loop.mp4"  # relative to the repo root
+# Which TV page to build: "drink" (default) or "food". Usage: build_drink_video.py [drink|food]
+PAGE = sys.argv[1] if len(sys.argv) > 1 else "drink"
+if PAGE not in ("drink", "food"):
+    sys.exit('Usage: build_drink_video.py [drink|food]')
+PLAYLIST_PATH = REPO_ROOT / PAGE / "playlist.json"
+SEGMENTS_PATH = REPO_ROOT / PAGE / "segments.json"
+OUTPUT_VIDEO = f"img/{PAGE}_menu_loop.mp4"  # relative to the repo root
+STILL_SECONDS = 16.4  # how long a still image (.png/.jpg) listed in "menu" plays per loop
 
 # Output format: 1080p, 30 fps, H.264 High profile level 4.0, no audio.
 # Level 4.0 / 1080p30 plays on practically every TV and streaming stick,
@@ -35,7 +40,7 @@ BACKGROUND = "0xf5efe8"  # menu's cream color, used if a clip needs letterboxing
 
 def load_playlist(path):
     """
-    Read and validate drink/playlist.json.
+    Read and validate <page>/playlist.json (page = drink or food).
 
     Args:
         path (Path): Location of playlist.json.
@@ -114,8 +119,11 @@ def normalize_clip(src, dst):
         f"pad={WIDTH}:{HEIGHT}:(ow-iw)/2:(oh-ih)/2:color={BACKGROUND},"
         f"fps={FPS},format=yuv420p,setsar=1"
     )
+    # A still image in the playlist becomes a short video of that image
+    is_still = src.suffix.lower() in (".png", ".jpg", ".jpeg")
+    inputs = ["-loop", "1", "-framerate", str(FPS), "-t", str(STILL_SECONDS), "-i", str(src)] if is_still else ["-i", str(src)]
     run([
-        "ffmpeg", "-v", "error", "-y", "-i", str(src),
+        "ffmpeg", "-v", "error", "-y", *inputs,
         "-vf", vf, "-an",
         "-c:v", "libx264", "-preset", "slow", "-crf", "18",
         "-profile:v", "high", "-level", "4.0",
@@ -215,7 +223,7 @@ def main():
     }
     SEGMENTS_PATH.write_text(json.dumps(segments, indent=2) + "\n", encoding="utf-8")
 
-    print(f"Wrote {OUTPUT_VIDEO} ({total} frames, {total / FPS:.1f}s) and drink/segments.json")
+    print(f"Wrote {OUTPUT_VIDEO} ({total} frames, {total / FPS:.1f}s) and {PAGE}/segments.json")
     print(json.dumps(segments, indent=2))
 
 

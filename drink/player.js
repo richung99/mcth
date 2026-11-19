@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // player.js
-// Plays the drink menu on the TV: loops the menu section of the combined video
+// Plays a menu page on the TV (shared by the drink and food pages): loops the menu section of the combined video
 // and, every few minutes, plays the next promo (they take turns) — all inside ONE
 // video file, so the TV never blinks. Also picks up new builds automatically.
 // Depends on: drink/segments.json + img/drink_menu_loop.mp4 (both written by
@@ -11,11 +11,12 @@
 
 (function () {
 	const SEGMENTS_URL = "segments.json";
-	const FALLBACK_VIDEO = "../img/drink_menu_loop.mp4";
 	const UPDATE_CHECK_MS = 5 * 60 * 1000; // how often to look for a new build
 	const STALL_LIMIT_S = 15;              // frozen this long -> reload the video
 
 	const video = document.querySelector(".menu-video");
+	// Used only if segments.json is unreachable; each page sets data-fallback on its <video>
+	const FALLBACK_VIDEO = video.dataset.fallback || "../img/drink_menu_loop.mp4";
 	const debugBox = document.getElementById("debug");
 	const DEBUG = /[?&]debug\b/.test(location.search);
 	const log = [];

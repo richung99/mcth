@@ -79,3 +79,6 @@ Responsibility: On pushes to main that touch `img/`, the playlist, the script or
 player.js → segments.json, img/drink_menu_loop.mp4 (fetched at runtime)
 build_drink_video.py → playlist.json, the videos it lists, ffmpeg/ffprobe
 build-drink-video.yml → build_drink_video.py
+
+## Food page (added 2026-11-19)
+`food/index.html` reuses `drink/player.js` (the `<video data-fallback>` attribute names its own fallback file). `scripts/build_drink_video.py food` reads `food/playlist.json` (a `.png`/`.jpg` in `menu` becomes a 16.4s still clip) and writes `img/food_menu_loop.mp4` + `food/segments.json`. `img/promotion-menu-food.mp4` is the THIRTEEN promo with the stinger laid over the food board: stinger starts at frames 147 and 391, board/promo swap at frames 200 and 444 while the stinger fully covers the screen.

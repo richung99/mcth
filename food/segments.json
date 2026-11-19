@@ -1,0 +1,22 @@
+{
+  "video": "img/food_menu_loop.mp4",
+  "version": "3830953a28c0",
+  "fps": 30,
+  "duration": 33.4333,
+  "promos": [
+    {
+      "source": "img/promotion-menu-food.mp4",
+      "start": 0.0,
+      "end": 17.0333
+    }
+  ],
+  "menu": {
+    "start": 17.0333,
+    "end": 33.4333
+  },
+  "promoEveryMinutes": 2,
+  "sources": [
+    "img/promotion-menu-food.mp4",
+    "img/TV-menu-food.png"
+  ]
+}
