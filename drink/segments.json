@@ -1,22 +1,28 @@
 {
   "video": "img/drink_menu_loop.mp4",
-  "version": "b104a13f46a2",
+  "version": "d8cd8f601fcb",
   "fps": 30,
-  "duration": 33.4333,
+  "duration": 44.6,
   "promos": [
     {
       "source": "img/promotion-menu.mp4",
       "start": 0.0,
       "end": 17.0333
+    },
+    {
+      "source": "img/winter-promo-menu.mp4",
+      "start": 17.0333,
+      "end": 28.2
     }
   ],
   "menu": {
-    "start": 17.0333,
-    "end": 33.4333
+    "start": 28.2,
+    "end": 44.6
   },
   "promoEveryMinutes": 2,
   "sources": [
     "img/promotion-menu.mp4",
+    "img/winter-promo-menu.mp4",
     "img/instagram-menu.mp4"
   ]
 }
