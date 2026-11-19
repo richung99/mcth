@@ -35,3 +35,7 @@ Open `drink/?debug` (for example `https://richung99.github.io/mcth/drink/?debug`
 ### Rebuilding by hand
 
 Needs Python 3 and ffmpeg: `python3 scripts/build_drink_video.py`
+
+### Regenerating the menu video (flipping logo card)
+
+`img/instagram-menu.mp4` is generated from `img/TV-menu-drink.png`: the logo card flips to the website/Instagram card and back. To change the board, edit the PNG; to change the card text, edit `scripts/flipcard/card.html`. Then run `python3 scripts/flipcard/render_flip_video.py img/instagram-menu.mp4` (needs Python `playwright` with Chromium, and ffmpeg) and push; the Action rebuilds the TV loop.

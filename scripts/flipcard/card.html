@@ -1,0 +1,57 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- card.html: one 1920x1080 frame of the drink-menu "flipping card" video.
+     Does NOT handle: encoding the video or choosing timing; render_flip_video.py does that.
+     Call window.setFrame(n) (0-based frame number at 30fps) before taking a screenshot. -->
+<style>
+  @font-face { font-family: Outfit; font-weight: 300; src: url(fonts/outfit-300.woff) format("woff"); }
+  @font-face { font-family: Outfit; font-weight: 600; src: url(fonts/outfit-600.woff) format("woff"); }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #f5f0ea; }
+  /* The menu board. The old logo card is painted over with the board's flat background colour
+     (see #cover) so the animated card can take its place. */
+  #board { position: absolute; inset: 0; background: url(TV-menu-drink.png) 0 0 / 1920px 1080px no-repeat; }
+  #cover { position: absolute; left: 750px; top: 596px; width: 365px; height: 166px; background: #f5f0ea; }
+  #stage { position: absolute; left: 755px; top: 601px; width: 355px; height: 156px; perspective: 900px; }
+  #card { position: absolute; inset: 0; transform-style: preserve-3d; }
+  .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  #logo { background: url(TV-menu-drink.png) -755px -601px / 1920px 1080px no-repeat; }
+  #info { transform: rotateY(180deg); background: #f5f0ea; }
+  #info .panel { position: absolute; left: 0; top: 0; width: 355px; height: 152px; border-radius: 10px;
+                 background: #fff9f4; box-shadow: 0 3.5px 0 #cbc6c1; }
+  .row { position: absolute; left: 0; width: 355px; height: 60px; }
+  .icon { position: absolute; left: 20px; top: 8px; width: 38px; height: 38px; border-radius: 50%; }
+  .icon svg { position: absolute; inset: 0; }
+  .label { position: absolute; left: 73px; top: 4px; font: 600 12.5px/1 Outfit; letter-spacing: 1.6px; }
+  .value { position: absolute; left: 72px; top: 17px; font: 300 28px/1 Outfit; color: #1a1a1a; white-space: nowrap; }
+  #r1 { top: 14px; } #r2 { top: 84px; }
+  #rule { position: absolute; left: 22px; right: 22px; top: 76px; height: 1px; background: #ece4da; }
+</style>
+<div id="board"></div><div id="cover"></div>
+<div id="stage"><div id="card">
+  <div class="face" id="logo"></div>
+  <div class="face" id="info"><div class="panel">
+    <div id="rule"></div>
+    <div class="row" id="r1">
+      <div class="icon" style="background:#f9e8d0"><svg viewBox="0 0 38 38" fill="none" stroke="#a87c4f" stroke-width="1.6"><circle cx="19" cy="19" r="9.5"/><ellipse cx="19" cy="19" rx="4.2" ry="9.5"/><path d="M9.5 19h19M11 14h16M11 24h16"/></svg></div>
+      <div class="label" style="color:#a07a4e">VISIT ONLINE</div>
+      <div class="value" id="site">mcteahouse.cafe</div>
+    </div>
+    <div class="row" id="r2">
+      <div class="icon" style="background:#dfe8d4"><svg viewBox="0 0 38 38" fill="none" stroke="#5f7d4f" stroke-width="1.7"><rect x="10" y="10" width="18" height="18" rx="5"/><circle cx="19" cy="19" r="4.3"/><circle cx="24.3" cy="13.7" r="0.9" fill="#5f7d4f"/></svg></div>
+      <div class="label" style="color:#5f7d4f">INSTAGRAM</div>
+      <div class="value">@mcteahousetw</div>
+    </div>
+  </div></div>
+</div></div>
+<script>
+  // Timing (frames @30fps): logo until FLIP_A0, flip to info over FLIP_LEN, info until FLIP_B0, flip back.
+  const FLIP_A0 = 211, FLIP_B0 = 463, FLIP_LEN = 11;
+  const ease = t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
+  window.setFrame = function (n) {
+    let a = 0;
+    if (n >= FLIP_A0 && n < FLIP_B0) a = ease(Math.min(1, (n - FLIP_A0 + 1) / FLIP_LEN));
+    if (n >= FLIP_B0) a = 1 - ease(Math.min(1, (n - FLIP_B0 + 1) / FLIP_LEN));
+    document.getElementById("card").style.transform = "rotateY(" + (a * 180) + "deg)";
+    return document.fonts.ready;
+  };
+</script>
