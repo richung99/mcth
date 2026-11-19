@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # -----------------------------------------------------------------------------
 # make_winter_promo.sh
-# Builds img/winter-promo-menu.mp4: the drink board, a snowball transition, the
+# Usage: make_winter_promo.sh [out.mp4] [board.png]
+# Builds img/winter-promo-menu.mp4 (or food): the menu board, a snowball transition, the
 # winter promo picture (img/winter-promo.png) with animated snow falling over it,
 # another snowball transition, and back to the drink board.
 # Depends on: ffmpeg (with libvpx-vp9 for the alpha .webm files in assets/winter/),
-#   img/TV-menu-drink.png, img/winter-promo.png.
+#   a board PNG (default img/TV-menu-drink.png), img/winter-promo.png.
 # Does NOT handle: adding it to the TV rotation (drink/playlist.json) or joining
 #   it into the loop (build_drink_video.py).
 # -----------------------------------------------------------------------------
@@ -17,8 +18,9 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 OUT=${1:-img/winter-promo-menu.mp4}
+BOARD=${2:-img/TV-menu-drink.png}   # use img/TV-menu-food.png for the food menu
 ffmpeg -loglevel error -y \
-  -loop 1 -framerate 30 -i img/TV-menu-drink.png \
+  -loop 1 -framerate 30 -i "$BOARD" \
   -loop 1 -framerate 30 -i img/winter-promo.png \
   -c:v libvpx-vp9 -i assets/winter/snow-8s.webm \
   -c:v libvpx-vp9 -i assets/winter/snowball-transition.webm \
