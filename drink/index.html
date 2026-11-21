@@ -7,46 +7,11 @@
 		<link rel="stylesheet" href="../styles.css">
 	</head>
 	<body>
-		<!--
-			Drink menu TV page.
-			- What plays is set in drink/playlist.json (menu videos + promos + how often).
-			- GitHub compiles everything into ONE video, img/drink_menu_loop.mp4
-			  (scripts/build_drink_video.py), with the promos baked in at fixed points,
-			  and the page just loops it. TV browsers blank the screen whenever a video switches files,
-			  so one file is what keeps it from ever blinking.
-			- Open this page with ?debug to see an on-screen status box.
-		-->
-		<!--<button id="fs-btn">⛶ Full Screen</button>-->
+		<!-- Drink Menu TV page: a still image of the menu board (img/TV-menu-drink.png). -->
 		<div class="menu-wrapper">
-			<main class="menu-screen video-playlist">
-				<video class="menu-video" src="../img/drink_menu_loop.mp4"
-					muted loop autoplay playsinline preload="auto"
-					poster="../img/TV-menu-drink.png"></video>
+			<main class="menu-screen">
+				<img src="../img/TV-menu-drink.png" alt="">
 			</main>
 		</div>
-		<div id="debug" hidden></div>
-		<script src="player.js"></script>
-		<script>
-		// ---- Optional full-screen button (only runs if the button above is uncommented) ----
-		const btn = document.getElementById("fs-btn");
-
-		if (btn) {
-			btn.addEventListener("click", async () => {
-				try {
-					if (!document.fullscreenElement) {
-						await document.documentElement.requestFullscreen();
-					}
-				} catch (e) {
-					console.error(e);
-				}
-			});
-
-			document.addEventListener("fullscreenchange", () => {
-				const fs = !!document.fullscreenElement;
-				btn.classList.toggle("hidden", fs);
-				document.documentElement.style.overflow = "hidden";
-			});
-		}
-	</script>
 	</body>
 </html>
