@@ -44,6 +44,6 @@ Needs Python 3 and ffmpeg: `python3 scripts/build_drink_video.py`
 
 The food page works the same way: `food/playlist.json` lists the food board (`img/TV-menu-food.png`, a still image is fine) and the promo (`img/promotion-menu-food.mp4`, the THIRTEEN promo with the boba stinger over the food board). GitHub builds `img/food_menu_loop.mp4`. Changing `TV-menu-food.png` rebuilds it automatically. Hand build: `python3 scripts/build_drink_video.py food`.
 
-### Winter promo (snowball transition + snow)
+### Winter promo (snowball transition)
 
-`img/winter-promo-menu.mp4` is the drink board, a snowball transition, the winter promo picture (`img/winter-promo.png`) with snow falling over it, and back. It alternates with the THIRTEEN promo on the drink menu, and `img/winter-promo-food-menu.mp4` does the same on the food menu (made with `scripts/make_winter_promo.sh img/winter-promo-food-menu.mp4 img/TV-menu-food.png`). To change the picture, replace `img/winter-promo.png` and run `scripts/make_winter_promo.sh` (needs ffmpeg), then push. The transition and snow clips are in `assets/winter/`.
+`img/winter-promo-menu.mp4` is the drink board, a snowball transition, the winter promo picture (`img/winter-promo.png`), and back. It alternates with the THIRTEEN promo on the drink menu, and `img/winter-promo-food-menu.mp4` does the same on the food menu (made with `scripts/make_winter_promo.sh img/winter-promo-food-menu.mp4 img/TV-menu-food.png`). To change the picture, replace `img/winter-promo.png` and run `scripts/make_winter_promo.sh` (needs ffmpeg), then push. The snowball transition clip is in `assets/winter/`.
