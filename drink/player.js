@@ -212,26 +212,6 @@
 	}
 
 	/**
-	 * Download the whole combined video into memory and return a local URL for it.
-	 *
-	 * @remarks
-	 * Jumping to a promo far into the file made the TV fetch that part over the
-	 * network at the moment of the jump, which showed up as a stall/lag. With the
-	 * file in memory, every jump is instant. If the download fails, the plain
-	 * URL is returned and the browser streams it as before.
-	 */
-	async function loadWholeFile(url) {
-		try {
-			const res = await fetch(url);
-			if (!res.ok) throw new Error("HTTP " + res.status);
-			return URL.createObjectURL(await res.blob());
-		} catch (e) {
-			note("could not preload video (" + e + "), streaming instead");
-			return url;
-		}
-	}
-
-	/**
 	 * Load the build info, point the video at the combined file and start.
 	 *
 	 * @remarks
@@ -256,7 +236,7 @@
 
 		if (segments) {
 			nextPromoAt = Date.now() + segments.promoEveryMinutes * 60 * 1000;
-			video.src = await loadWholeFile("../" + segments.video + "?v=" + segments.version);
+			video.src = "../" + segments.video + "?v=" + segments.version;
 		} else {
 			video.src = FALLBACK_VIDEO;
 		}
