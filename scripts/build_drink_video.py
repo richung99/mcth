@@ -9,17 +9,18 @@ from pathlib import Path
 
 # -----------------------------------------------------------------------------
 # build_drink_video.py
-# Joins the drink menu videos listed in drink/playlist.json into ONE video file
-# (img/<page>_menu_loop.mp4) and writes <page>/segments.json, which tells the
-# drink page where the promo and menu sections start and end inside that file.
+# Compiles the whole TV show for a page (drink or food) from <page>/playlist.json
+# into ONE video file, img/<page>_menu_loop.mp4: the menu repeated, with each
+# promo baked in at its turn. The page just loops that file. Also writes
+# <page>/segments.json, a readable list of what's where (the page ignores it).
 # Depends on: ffmpeg + ffprobe on PATH, Python 3.8+ standard library only.
-# Does NOT handle: playback or promo timing (drink/index.html does that), or
-#   committing the output (the GitHub workflow does that).
+# Does NOT handle: playback (index.html + drink/player.js) or committing the
+#   output (the GitHub workflow does that).
 # -----------------------------------------------------------------------------
 
 # Why one file: TV browsers blank the screen for a moment whenever a <video>
-# switches to a different file. Inside one file the page can jump around with
-# no blink at all.
+# switches to a different file. One file played with the browser's own "loop"
+# never blinks.
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 # Which TV page to build: "drink" (default) or "food". Usage: build_drink_video.py [drink|food]
@@ -163,68 +164,69 @@ def short_hash(path):
 
 def main():
     """
-    Build img/drink_menu_loop.mp4 and drink/segments.json from playlist.json.
+    Build img/<page>_menu_loop.mp4 (and <page>/segments.json) from playlist.json.
 
     Notes:
-        Layout of the output file is [promo 1][promo 2]...[menu 1][menu 2]...
-        The promos go FIRST, so the LAST promo flows straight into the menu
-        without a jump (the page jumps to the menu at the end of any earlier
-        promo). The menu section ends at the end of the file, where the
-        browser's "ended" event fires at exactly the right moment for the page
-        to decide what plays next.
+        The output is the WHOLE show in one file, which the page simply loops:
+            [menu x N][promo 1][menu x N][promo 2]...
+        N is how many menu loops fit in promoEveryMinutes, so each promo comes
+        round about that often. Every promo starts and ends on the menu board,
+        so the joins (and the wrap-around from the end back to the start) are
+        seamless. No promos -> the file is just the menu once.
+        segments.json is informational only (the page doesn't read it).
     """
     playlist = load_playlist(PLAYLIST_PATH)
-    clips = playlist["promos"] + playlist["menu"]
+    menu, promo_list = playlist["menu"], playlist["promos"]
 
     with tempfile.TemporaryDirectory() as tmp:
         workdir = Path(tmp)
 
-        # Normalize each clip and record its exact length in frames
-        parts, frames = [], []
-        for i, src in enumerate(clips):
+        # Normalize each distinct clip once and record its exact length in frames
+        part_of, frames_of = {}, {}
+        for i, src in enumerate(dict.fromkeys(menu + promo_list)):
             dst = workdir / f"part{i:02d}.mp4"
             print(f"Encoding {src.relative_to(REPO_ROOT)} ...", flush=True)
             normalize_clip(src, dst)
-            parts.append(dst)
-            frames.append(count_frames(dst))
+            part_of[src], frames_of[src] = dst, count_frames(dst)
 
-        # Join the clips into one file
+        # Lay out the whole show: N menu loops before each promo
+        menu_frames = sum(frames_of[c] for c in menu)
+        n_menu = max(1, round(playlist["promoEveryMinutes"] * 60 * FPS / menu_frames)) if promo_list else 1
+        sequence = []
+        for promo in promo_list or [None]:
+            sequence += menu * n_menu
+            if promo:
+                sequence.append(promo)
+
         joined = workdir / "joined.mp4"
-        concat_clips(parts, joined, workdir)
+        concat_clips([part_of[c] for c in sequence], joined, workdir)
 
         # Sanity check: no frames lost or added by the join
         total = count_frames(joined)
-        if total != sum(frames):
-            sys.exit(f"Joined video has {total} frames, expected {sum(frames)}.")
+        expected = sum(frames_of[c] for c in sequence)
+        if total != expected:
+            sys.exit(f"Joined video has {total} frames, expected {expected}.")
 
         out_path = REPO_ROOT / OUTPUT_VIDEO
         shutil.move(str(joined), out_path)
 
-    # Work out section boundaries in seconds (frame counts / fps are exact)
-    promos, start = [], 0
-    for i, src in enumerate(playlist["promos"]):
-        end = start + frames[i]
-        promos.append({
-            "source": str(src.relative_to(REPO_ROOT).as_posix()),
-            "start": round(start / FPS, 4),
-            "end": round(end / FPS, 4),
-        })
-        start = end
-    menu_start = start
+    # Record what's where (seconds), for people reading it; the page doesn't use it
+    entries, start = [], 0
+    for c in sequence:
+        entries.append({"source": c.relative_to(REPO_ROOT).as_posix(),
+                        "start": round(start / FPS, 4), "end": round((start + frames_of[c]) / FPS, 4)})
+        start += frames_of[c]
     segments = {
         "video": OUTPUT_VIDEO,
         "version": short_hash(out_path),
         "fps": FPS,
         "duration": round(total / FPS, 4),
-        "promos": promos,
-        "menu": {"start": round(menu_start / FPS, 4), "end": round(total / FPS, 4)},
-        "promoEveryMinutes": playlist["promoEveryMinutes"],
-        "sources": [str(c.relative_to(REPO_ROOT).as_posix()) for c in clips],
+        "menuLoopsBetweenPromos": n_menu,
+        "sequence": entries,
     }
     SEGMENTS_PATH.write_text(json.dumps(segments, indent=2) + "\n", encoding="utf-8")
 
-    print(f"Wrote {OUTPUT_VIDEO} ({total} frames, {total / FPS:.1f}s) and {PAGE}/segments.json")
-    print(json.dumps(segments, indent=2))
+    print(f"Wrote {OUTPUT_VIDEO} ({total} frames, {total / FPS:.1f}s, menu x{n_menu} between promos) and {PAGE}/segments.json")
 
 
 if __name__ == "__main__":

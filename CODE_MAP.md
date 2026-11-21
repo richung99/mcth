@@ -82,3 +82,6 @@ build-drink-video.yml → build_drink_video.py
 
 ## Food page (added 2026-11-19)
 `food/index.html` reuses `drink/player.js` (the `<video data-fallback>` attribute names its own fallback file). `scripts/build_drink_video.py food` reads `food/playlist.json` (a `.png`/`.jpg` in `menu` becomes a 16.4s still clip) and writes `img/food_menu_loop.mp4` + `food/segments.json`. `img/promotion-menu-food.mp4` is the THIRTEEN promo with the stinger laid over the food board: stinger starts at frames 147 and 391, board/promo swap at frames 200 and 444 while the stinger fully covers the screen.
+
+## 2026-11-21: back to one pre-compiled loop (replaces the jumping player above)
+Seeking inside the file and auto-reloading on new builds caused black flashes on the TV. Now `build_drink_video.py <page>` compiles the whole show, `[menu x N][promo 1][menu x N][promo 2]`, N = menu loops per `promoEveryMinutes`, into `img/<page>_menu_loop.mp4`. The `<video loop autoplay>` plays it natively. `drink/player.js` (shared by food) only resumes if paused and reloads the video if frozen 15s. It never seeks, switches files or reloads the page. `segments.json` is now just a readable list of what's where. New builds show up when the TV page is reloaded.

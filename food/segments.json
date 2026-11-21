@@ -1,28 +1,89 @@
 {
   "video": "img/food_menu_loop.mp4",
-  "version": "7a2d232b1780",
+  "version": "179ff93bf677",
   "fps": 30,
-  "duration": 44.6,
-  "promos": [
+  "duration": 257.8,
+  "menuLoopsBetweenPromos": 7,
+  "sequence": [
+    {
+      "source": "img/TV-menu-food.png",
+      "start": 0.0,
+      "end": 16.4
+    },
+    {
+      "source": "img/TV-menu-food.png",
+      "start": 16.4,
+      "end": 32.8
+    },
+    {
+      "source": "img/TV-menu-food.png",
+      "start": 32.8,
+      "end": 49.2
+    },
+    {
+      "source": "img/TV-menu-food.png",
+      "start": 49.2,
+      "end": 65.6
+    },
+    {
+      "source": "img/TV-menu-food.png",
+      "start": 65.6,
+      "end": 82.0
+    },
+    {
+      "source": "img/TV-menu-food.png",
+      "start": 82.0,
+      "end": 98.4
+    },
+    {
+      "source": "img/TV-menu-food.png",
+      "start": 98.4,
+      "end": 114.8
+    },
     {
       "source": "img/promotion-menu-food.mp4",
-      "start": 0.0,
-      "end": 17.0333
+      "start": 114.8,
+      "end": 131.8333
+    },
+    {
+      "source": "img/TV-menu-food.png",
+      "start": 131.8333,
+      "end": 148.2333
+    },
+    {
+      "source": "img/TV-menu-food.png",
+      "start": 148.2333,
+      "end": 164.6333
+    },
+    {
+      "source": "img/TV-menu-food.png",
+      "start": 164.6333,
+      "end": 181.0333
+    },
+    {
+      "source": "img/TV-menu-food.png",
+      "start": 181.0333,
+      "end": 197.4333
+    },
+    {
+      "source": "img/TV-menu-food.png",
+      "start": 197.4333,
+      "end": 213.8333
+    },
+    {
+      "source": "img/TV-menu-food.png",
+      "start": 213.8333,
+      "end": 230.2333
+    },
+    {
+      "source": "img/TV-menu-food.png",
+      "start": 230.2333,
+      "end": 246.6333
     },
     {
       "source": "img/winter-promo-food-menu.mp4",
-      "start": 17.0333,
-      "end": 28.2
+      "start": 246.6333,
+      "end": 257.8
     }
-  ],
-  "menu": {
-    "start": 28.2,
-    "end": 44.6
-  },
-  "promoEveryMinutes": 2,
-  "sources": [
-    "img/promotion-menu-food.mp4",
-    "img/winter-promo-food-menu.mp4",
-    "img/TV-menu-food.png"
   ]
 }

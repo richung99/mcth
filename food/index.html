@@ -10,11 +10,11 @@
 		<!--<button id="fs-btn">⛶ Full Screen</button>-->
 		<div class="menu-wrapper">
 			<main class="menu-screen video-playlist">
-				<!-- Plays img/food_menu_loop.mp4: the food board on repeat, with the THIRTEEN promo
-				     (stinger transition) every few minutes. Set in food/playlist.json; see README.
-				     Open with ?debug for a status box. -->
-				<video class="menu-video" muted playsinline preload="auto"
-					poster="../img/TV-menu-food.png" data-fallback="../img/food_menu_loop.mp4"></video>
+				<!-- Plays img/food_menu_loop.mp4 on a loop: the food board with the promos baked in
+				     (see food/playlist.json and the README). Open with ?debug for a status box. -->
+				<video class="menu-video" src="../img/food_menu_loop.mp4"
+					muted loop autoplay playsinline preload="auto"
+					poster="../img/TV-menu-food.png"></video>
 			</main>
 		</div>
 	<div id="debug" hidden></div>
