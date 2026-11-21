@@ -125,10 +125,13 @@ def normalize_clip(src, dst):
     run([
         "ffmpeg", "-v", "error", "-y", *inputs,
         "-vf", vf, "-an",
-        "-c:v", "libx264", "-preset", "slow", "-crf", "22",
-        # Cap the bitrate and reference frames so TV chips decode smoothly, even
-        # on busy scenes like falling snow over a photo (was uncapped, up to 9 Mbps)
-        "-maxrate", "3500k", "-bufsize", "7000k", "-refs", "3",
+        "-c:v", "libx264", "-preset", "slow", "-crf", "23",
+        # Keep decoding light for the TV: the winter promo (snow over a full
+        # photo) lagged on the TV. "fastdecode" turns off the costliest decode
+        # steps (CABAC, deblocking), plus a bitrate cap and fewer reference
+        # frames. Measured: the winter promo now costs ~1/3 of what it did and
+        # less than the THIRTEEN promo did when it played smoothly.
+        "-tune", "fastdecode", "-maxrate", "2500k", "-bufsize", "5000k", "-refs", "3",
         "-profile:v", "high", "-level", "4.0",
         "-bf", "0", "-g", str(FPS * 20),
         str(dst),
