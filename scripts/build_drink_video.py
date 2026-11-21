@@ -125,7 +125,10 @@ def normalize_clip(src, dst):
     run([
         "ffmpeg", "-v", "error", "-y", *inputs,
         "-vf", vf, "-an",
-        "-c:v", "libx264", "-preset", "slow", "-crf", "18",
+        "-c:v", "libx264", "-preset", "slow", "-crf", "22",
+        # Cap the bitrate and reference frames so TV chips decode smoothly, even
+        # on busy scenes like falling snow over a photo (was uncapped, up to 9 Mbps)
+        "-maxrate", "3500k", "-bufsize", "7000k", "-refs", "3",
         "-profile:v", "high", "-level", "4.0",
         "-bf", "0", "-g", str(FPS * 20),
         str(dst),
