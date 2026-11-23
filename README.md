@@ -47,3 +47,9 @@ The food page works the same way: `food/playlist.json` lists the food board (`im
 ### Winter promo (snowball transition)
 
 `img/winter-promo-menu.mp4` is the drink board, a snowball transition, the winter promo picture (`img/winter-promo.png`), and back. It alternates with the THIRTEEN promo on the drink menu, and `img/winter-promo-food-menu.mp4` does the same on the food menu (made with `scripts/make_winter_promo.sh img/winter-promo-food-menu.mp4 img/TV-menu-food.png`). To change the picture, replace `img/winter-promo.png` and run `scripts/make_winter_promo.sh` (needs ffmpeg), then push. The snowball transition clip is in `assets/winter/`.
+
+### THIRTEEN promo
+
+`img/promotion-menu.mp4` is the drink board, the boba stinger, the THIRTEEN screen and back. It's made by `scripts/make_thirteen_promo.sh` from `assets/thirteen/` and `img/TV-menu-drink.png`. If the board changes, rerun that script (and `scripts/make_winter_promo.sh`) so the promos show the current board.
+
+**Note (Nov 22):** the food page is a still image (`img/TV-menu-food.png`). The drink page loops `img/drink_menu_loop.mp4`.
