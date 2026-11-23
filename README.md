@@ -50,5 +50,5 @@ The food TV page is a still image: `img/TV-menu-food.png`. To update it, upload 
 
 ### THIRTEEN promo
 
-`img/promotion-menu.mp4` is the drink board, the boba stinger, the THIRTEEN screen and back. It's made by `scripts/make_thirteen_promo.sh` from `assets/thirteen/` and `img/TV-menu-drink.png`. If the board changes, rerun that script (and `scripts/make_winter_promo.sh`) so the promos show the current board.
+`img/promotion-menu.mp4` is the drink board, the boba stinger, the THIRTEEN screen and back. It's made by `scripts/make_thirteen_promo.sh` from `assets/thirteen/` and `img/TV-menu-drink.png`. If the board changes, rerun that script (and `scripts/make_holiday_promo.sh`) so the promos show the current board.
 
