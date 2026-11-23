@@ -1,26 +1,31 @@
 #!/usr/bin/env python3
 # -----------------------------------------------------------------------------
 # make_holiday_promo.py
-# Builds img/winter-promo-menu.mp4: the menu board, a "snowfall" transition, the
-# holiday promo picture, the snowfall transition again, and back to the board.
+# Builds img/winter-promo-menu.mp4: the menu board, a snowball-splat transition,
+# the holiday promo picture, the same transition again, and back to the board.
 # Depends on: Python 3 with numpy + Pillow, ffmpeg on PATH.
 # Does NOT handle: putting it into the TV loop (build_drink_video.py does that).
 # -----------------------------------------------------------------------------
-# Why a home-made transition: the bought snowball stinger lagged on the TV.
-# Hundreds of small moving shapes over a detailed picture are expensive for a
-# TV to decode. This one is a single sheet of snow with a wavy edge and a few
-# big snowballs, in flat colours, sweeping down the screen, so each frame only
-# changes a narrow band of the picture.
+# The transition: one snowball flies in toward the camera, splats across the
+# whole screen (snow white), then the snow melts away from the middle out, with
+# a very soft edge, to show what's underneath.
+#
+# Why home-made: the bought snowball stinger lagged on the TV. Its splat broke
+# into hundreds of small blobs flying over a detailed picture, which is very
+# expensive for a TV to decode. Here the ball and the splat are flat white, and
+# the reveal is one soft-edged opening, so each frame only changes a ring of the
+# picture. (A true see-through fade of the whole screen was tried too: it
+# changes every pixel on every frame and was as heavy as the old stinger.)
 #
 # Usage: python3 scripts/make_holiday_promo.py [out.mp4] [board.png] [promo.png]
 #
-# Timing (30 fps frames), same slots as before:
-#   0-29     board
-#   30-59    snow sheet falls from the top and covers the screen at 60
-#   60-81    sheet keeps falling and uncovers the promo picture
-#   82-254   promo picture
-#   255-306  same transition back to the board (covered at 285)
-#   307-334  board                                   (335 frames = 11.17 s)
+# Timing (30 fps frames). Each transition starts at S:
+#   S .. S+15   snowball flies in, growing as it comes closer
+#   S+16..S+23  splat spreads across the screen (fully white at S+24)
+#   S+24..S+26  white (the picture underneath is swapped at S+24)
+#   S+27..S+56  snow melts away
+# S = 36 and 261, so the swaps land at frames 60 and 285 (same as before);
+# 335 frames = 11.17 s in total.
 
 import subprocess
 import sys
@@ -30,84 +35,91 @@ import numpy as np
 from PIL import Image
 
 W, H, FPS, TOTAL = 1920, 1080, 30, 335
-COVER_FRAMES, UNCOVER_FRAMES = 30, 22
-STINGERS = (30, 255)          # frame each transition starts; swap at start + COVER_FRAMES
+STARTS = (36, 261)
+FLY, SPLAT, HOLD, FADE = 16, 8, 3, 30
+FEATHER = 120  # softness of the melting edge, px (softer looks more like fading)
+SWAP_AT = FLY + SPLAT                      # frames after S when the screen is fully white
 SNOW = np.array([255, 255, 255], np.float32)
-SHADE = np.array([214, 228, 242], np.float32)   # pale blue rim on snowballs and edge
-EDGE_SHADE_PX = 10
+SHADE = np.array([206, 222, 240], np.float32)  # pale blue shading on the flying ball
 
 ROOT = Path(__file__).resolve().parent.parent
-XS = np.arange(W, dtype=np.float32)
+XS = np.arange(W, dtype=np.float32)[None, :]
 YS = np.arange(H, dtype=np.float32)[:, None]
-
-# Snowballs riding the leading (bottom) edge and the trailing (top) edge:
-# (x position, radius, how far it hangs past the edge)
-LEAD_BALLS = [(120, 70, 40), (420, 95, 55), (760, 60, 30), (1010, 85, 50),
-              (1330, 70, 35), (1600, 100, 60), (1850, 65, 30)]
-TRAIL_BALLS = [(250, 80, 45), (640, 65, 35), (980, 95, 55), (1420, 75, 40), (1760, 85, 50)]
+CX, CY = W / 2, H / 2 + 20                 # where the ball hits
 
 
-def ease(t):
-    """Smooth start and stop for a 0..1 progress value."""
+def smooth(t):
+    """Gentle start and stop, for a 0..1 progress value."""
     t = min(max(t, 0.0), 1.0)
     return t * t * (3 - 2 * t)
 
 
-def wave(x, phase):
-    """Wavy offset of a snow edge, in pixels."""
-    return 28 * np.sin(2 * np.pi * x / 520 + phase) + 14 * np.sin(2 * np.pi * x / 230 + 2 * phase)
+def lumpy_disc(cx, cy, radius, lumps, spin, soft=1.0):
+    """
+    Coverage (0..1) of a lumpy round shape, with smooth edges.
+
+    Args:
+        cx, cy (float): centre in pixels.
+        radius (float): average radius in pixels.
+        lumps (list): (count, size) pairs; each adds that many bumps of that
+                      relative size around the edge.
+        spin (float): rotation of the bumps, in radians.
+        soft (float): edge softness in pixels.
+
+    Returns:
+        np.ndarray: HxW float coverage.
+    """
+    dx, dy = XS - cx, YS - cy
+    dist = np.hypot(dx, dy)
+    ang = np.arctan2(dy, dx) + spin
+    edge = np.full_like(ang, radius)
+    for i, (count, size) in enumerate(lumps):
+        edge = edge + radius * size * np.sin(count * ang + 1.7 * i)
+    return np.clip((edge - dist) / soft + 0.5, 0, 1)
 
 
 def snow_layer(frame):
     """
-    Work out where the snow covers the screen on one frame.
+    How much snow covers the screen on one frame.
 
     Args:
         frame (int): 0-based frame number.
 
     Returns:
-        tuple: (coverage, shade) as HxW float arrays in 0..1, or (None, None)
-               when no transition is on screen. coverage = snow on top of the
-               picture; shade = the pale-blue part of that snow.
+        tuple: (coverage, shade), each an HxW array (or a single number for a
+               uniform fade) in 0..1, or (None, None) when no transition is on
+               screen. shade = the pale-blue part of the snow.
     """
-    for start in STINGERS:
-        k = frame - start
-        if 0 <= k < COVER_FRAMES + UNCOVER_FRAMES:
+    for s in STARTS:
+        k = frame - s
+        if 0 <= k < SWAP_AT + HOLD + FADE:
             break
     else:
         return None, None
 
-    margin = 220  # keeps the edges and balls fully off screen at the ends
-    lead_y = -margin + (H + 2 * margin) * ease(k / COVER_FRAMES)
-    trail_y = -margin + (H + 2 * margin) * ease((k - COVER_FRAMES) / UNCOVER_FRAMES) if k >= COVER_FRAMES else -1e9
-
-    lead = lead_y + wave(XS, 0.8)
-    trail = trail_y + wave(XS, 2.1)
-    # Snow sheet between the two edges (with 1px soft edges for smoothness)
-    cov = np.clip(lead - YS + 0.5, 0, 1) * np.clip(YS - trail + 0.5, 0, 1)
-    shade = np.clip(lead - YS + 0.5, 0, 1) * np.clip(YS - (lead - EDGE_SHADE_PX) + 0.5, 0, 1) * cov
-
-    def add_ball(cx, cy, r):
-        nonlocal cov, shade
-        x0, x1 = int(max(cx - r - 2, 0)), int(min(cx + r + 2, W))
-        y0, y1 = int(max(cy - r - 2, 0)), int(min(cy + r + 2, H))
-        if x0 >= x1 or y0 >= y1:
-            return
-        d = np.hypot(XS[x0:x1][None, :] - cx, YS[y0:y1] - cy)
-        ball = np.clip(r - d + 0.5, 0, 1)
-        # pale-blue crescent on the lower right: makes it read as a round snowball
-        d_lit = np.hypot(XS[x0:x1][None, :] - (cx - r * 0.22), YS[y0:y1] - (cy - r * 0.22))
-        rim = ball * (1 - np.clip(r * 0.92 - d_lit + 0.5, 0, 1))
-        cov[y0:y1, x0:x1] = np.maximum(cov[y0:y1, x0:x1], ball)
-        # the ball sits on top of the sheet: its own rim, sheet shading hidden under it
-        shade[y0:y1, x0:x1] = shade[y0:y1, x0:x1] * (1 - ball) + rim
-
-    for x, r, hang in LEAD_BALLS:
-        add_ball(x, lead_y + wave(np.float32(x), 0.8) + hang - r * 0.4, r)
-    if k >= COVER_FRAMES:
-        for x, r, hang in TRAIL_BALLS:
-            add_ball(x, trail_y + wave(np.float32(x), 2.1) - hang + r * 0.4, r)
-    return cov, np.clip(shade, 0, 1)
+    if k < FLY:
+        # Flying in: from small and far (upper right) to big at the centre, spinning
+        t = k / (FLY - 1)
+        r = 16 * (260 / 16) ** (t ** 1.5)                     # grows faster as it nears
+        x = CX + (1 - t) * 520 - 80 * np.sin(np.pi * t)       # slight arc
+        y = CY - (1 - t) * 300 - 120 * np.sin(np.pi * t)
+        lumps = [(5, 0.06), (8, 0.035)]
+        ball = lumpy_disc(x, y, r, lumps, spin=t * 2.2, soft=1.2)
+        lit = lumpy_disc(x - r * 0.2, y - r * 0.2, r * 0.9, lumps, spin=t * 2.2, soft=r * 0.15 + 1)
+        return ball, ball * (1 - lit)
+    if k < SWAP_AT:
+        # Splat: bursts out with big lobes until it covers the whole screen
+        t = ((k - FLY + 1) / SPLAT) ** 1.3
+        r = 260 + t * (2300 - 260)
+        return lumpy_disc(CX, CY, r, [(7, 0.22), (12, 0.12), (19, 0.06)], spin=0.3, soft=6.0), 0.0
+    if k < SWAP_AT + HOLD:
+        return 1.0, 0.0
+    # Fade away
+    # Melt away: a soft-edged opening grows from the middle until the snow is gone
+    t = smooth((k - SWAP_AT - HOLD + 1) / FADE)
+    r = -150 + t * (1500 + 150)
+    hole = lumpy_disc(CX, CY, r, [(6, 0.12), (11, 0.06)], spin=1.1, soft=FEATHER)
+    return 1.0 - hole, 0.0
 
 
 def load(path):
@@ -119,7 +131,7 @@ def main():
     out = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "img/winter-promo-menu.mp4"
     board = load(sys.argv[2] if len(sys.argv) > 2 else ROOT / "img/TV-menu-drink.png")
     promo = load(sys.argv[3] if len(sys.argv) > 3 else ROOT / "img/winter-promo.png")
-    swap_in, swap_out = STINGERS[0] + COVER_FRAMES, STINGERS[1] + COVER_FRAMES
+    swap_in, swap_out = STARTS[0] + SWAP_AT, STARTS[1] + SWAP_AT
 
     enc = subprocess.Popen([
         "ffmpeg", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24",
@@ -132,8 +144,14 @@ def main():
         if cov is None:
             frame = base
         else:
-            snow = SNOW * (1 - shade[..., None]) + SHADE * shade[..., None]
-            frame = base * (1 - cov[..., None]) + snow * cov[..., None]
+            cov = np.asarray(cov, np.float32)
+            shade = np.asarray(shade, np.float32)
+            if cov.ndim:
+                cov = cov[..., None]
+            if shade.ndim:
+                shade = shade[..., None]
+            snow = SNOW * (1 - shade) + SHADE * shade
+            frame = base * (1 - cov) + snow * cov
         enc.stdin.write(np.clip(frame + 0.5, 0, 255).astype(np.uint8).tobytes())
     enc.stdin.close()
     if enc.wait() != 0:
