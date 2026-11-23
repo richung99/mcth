@@ -44,9 +44,9 @@ Needs Python 3 and ffmpeg: `python3 scripts/build_drink_video.py`
 
 The food TV page is a still image: `img/TV-menu-food.png`. To update it, upload a new image with the same name. No video or promos.
 
-### Holiday promo (snowfall transition)
+### Holiday promo (gift-wrap transition)
 
-`img/winter-promo-menu.mp4` is the drink board, a snowfall transition (a sheet of snow with a few snowballs sweeping down the screen), the holiday picture (`img/winter-promo.png`), the same transition, and back to the board. The transition is home-made in `scripts/make_holiday_promo.py`. The bought snowball stinger lagged on the TV, and this one takes about a quarter of the work to play. To change the picture or board, replace the PNG and run `python3 scripts/make_holiday_promo.py` (needs numpy, Pillow, ffmpeg), then push.
+`img/winter-promo-menu.mp4` is the drink board, the gift-wrap ribbon stinger, the holiday picture (`img/winter-promo.png`), the stinger again, and back to the board. It's made by `scripts/make_holiday_promo.sh` from `assets/holiday/gift-wrap-stinger.webm`. The snowball stinger lagged on the TV; the ribbon is about as light to play as the THIRTEEN boba stinger. To change the picture or board, replace the PNG, rerun the script, and push.
 
 ### THIRTEEN promo
 
