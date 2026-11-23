@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // player.js
-// Keeps the menu video playing on the TV (shared by the drink and food pages).
+// Keeps the drink menu video playing on the TV.
 // The video is ONE pre-built file with the promos already baked in at fixed
 // points (scripts/build_drink_video.py), and the <video> element loops it with
 // the browser's own "loop". This script never seeks, switches files or reloads

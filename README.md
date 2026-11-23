@@ -42,7 +42,7 @@ Needs Python 3 and ffmpeg: `python3 scripts/build_drink_video.py`
 
 ### Food menu
 
-The food page works the same way: `food/playlist.json` lists the food board (`img/TV-menu-food.png`, a still image is fine) and the promo (`img/promotion-menu-food.mp4`, the THIRTEEN promo with the boba stinger over the food board). GitHub builds `img/food_menu_loop.mp4`. Changing `TV-menu-food.png` rebuilds it automatically. Hand build: `python3 scripts/build_drink_video.py food`.
+The food TV page is a still image: `img/TV-menu-food.png`. To update it, upload a new image with the same name. No video or promos.
 
 ### Holiday promo (snowfall transition)
 
@@ -52,4 +52,3 @@ The food page works the same way: `food/playlist.json` lists the food board (`im
 
 `img/promotion-menu.mp4` is the drink board, the boba stinger, the THIRTEEN screen and back. It's made by `scripts/make_thirteen_promo.sh` from `assets/thirteen/` and `img/TV-menu-drink.png`. If the board changes, rerun that script (and `scripts/make_winter_promo.sh`) so the promos show the current board.
 
-**Note (Nov 22):** the food page is a still image (`img/TV-menu-food.png`). The drink page loops `img/drink_menu_loop.mp4`.

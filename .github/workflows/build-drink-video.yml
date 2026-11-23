@@ -1,10 +1,10 @@
 # -----------------------------------------------------------------------------
 # build-drink-video.yml
-# Rebuilds img/{drink,food}_menu_loop.mp4 + their segments.json whenever a video or
+# Rebuilds img/drink_menu_loop.mp4 + drink/segments.json whenever a video or
 # drink/playlist.json changes on main, then commits the result back to main
 # (which republishes the site on GitHub Pages).
 # Depends on: scripts/build_drink_video.py, ffmpeg (installed below).
-# Does NOT handle: playback (drink/player.js, shared by the food page).
+# Does NOT handle: playback (drink/player.js). The food page is a still image.
 # -----------------------------------------------------------------------------
 name: Build drink menu video
 
@@ -14,7 +14,6 @@ on:
     paths:
       - "img/**"
       - "drink/playlist.json"
-      - "food/playlist.json"
       - "scripts/build_drink_video.py"
       - ".github/workflows/build-drink-video.yml"
   workflow_dispatch: # also lets you run it by hand from the Actions tab
@@ -39,7 +38,6 @@ jobs:
       - name: Build combined video
         run: |
           python3 scripts/build_drink_video.py drink
-          python3 scripts/build_drink_video.py food
 
       # The bot's own commit does not re-trigger this workflow (GitHub never
       # starts workflows from pushes made with the built-in GITHUB_TOKEN).
@@ -47,7 +45,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-          git add img/drink_menu_loop.mp4 drink/segments.json img/food_menu_loop.mp4 food/segments.json
+          git add img/drink_menu_loop.mp4 drink/segments.json
           if git diff --cached --quiet; then
             echo "Nothing changed."
             exit 0
