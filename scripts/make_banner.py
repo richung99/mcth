@@ -9,7 +9,7 @@
 #   drink/playlist.json has a "banner" entry).
 # -----------------------------------------------------------------------------
 # Usage: python3 scripts/make_banner.py [out.png] [title] [deal] [height]
-#   default: img/banner-black-friday.png "BLACK FRIDAY · FOLLOW @MCTEAHOUSETW" "5% OFF" 86
+#   default: img/banner-black-friday.png "BLACK FRIDAY · FOLLOW @MCTEAHOUSETW" "5% OFF" 72
 #   The title shrinks to fit if it is long.
 
 import sys
@@ -26,13 +26,13 @@ PILL_TEXT = (17, 17, 17)
 out = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "img/banner-black-friday.png"
 title = sys.argv[2] if len(sys.argv) > 2 else "BLACK FRIDAY · FOLLOW @MCTEAHOUSETW"
 deal = sys.argv[3] if len(sys.argv) > 3 else "5% OFF"
-h = int(sys.argv[4]) if len(sys.argv) > 4 else 86
+h = int(sys.argv[4]) if len(sys.argv) > 4 else 72
 
 im = Image.new("RGB", (1920, 1080), BG)
 d = ImageDraw.Draw(im)
 d.rectangle((0, 0, 1920, h - 1), fill=BAND)
 
-pf = ImageFont.truetype(FONT, 44)
+pf = ImageFont.truetype(FONT, round(h * 0.51))
 gap = 34
 pw = d.textlength(deal, font=pf) + 2 * 30
 
@@ -41,8 +41,8 @@ def spaced_width(text, font):
     return sum(d.textlength(c, font=font) for c in text) + spacing * (len(text) - 1)
 
 
-# Largest title size (46px down) that fits with the pill and side margins
-for size in range(46, 20, -1):
+# Largest title size (up to about half the band height) that fits with the pill
+for size in range(round(h * 0.53), 16, -1):
     tf = ImageFont.truetype(FONT, size)
     spacing = round(size * 0.13)  # letter spacing for the title, px
     tw = spaced_width(title, tf)
@@ -56,7 +56,7 @@ for c in title:
     x += d.textlength(c, font=tf) + spacing
 x += gap - spacing
 # deal in a pill
-ph = 60
+ph = round(h * 0.70)
 d.rounded_rectangle((x, cy - ph / 2, x + pw, cy + ph / 2), ph / 2, fill=PILL)
 d.text((x + pw / 2, cy + 2), deal, font=pf, fill=PILL_TEXT, anchor="mm")
 im.save(out)

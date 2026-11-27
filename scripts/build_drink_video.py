@@ -88,7 +88,13 @@ def load_playlist(path):
         if not isinstance(banner, dict) or not isinstance(banner.get("height"), int) \
                 or not (0 < banner["height"] < HEIGHT // 3) or not (REPO_ROOT / str(banner.get("image", ""))).is_file():
             sys.exit('"banner" must be {"image": "<existing png>", "height": <pixels, under 360>}.')
-        banner = {"image": REPO_ROOT / banner["image"], "height": banner["height"]}
+        # Optional cropTop/cropBottom (px of the 1080p frame): trim the empty
+        # strips above and below the menu board so it can be drawn bigger.
+        crop = (banner.get("cropTop", 0), banner.get("cropBottom", 0))
+        if not all(isinstance(c, int) and 0 <= c < 200 for c in crop):
+            sys.exit('"cropTop"/"cropBottom" must be whole numbers of pixels under 200.')
+        banner = {"image": REPO_ROOT / banner["image"], "height": banner["height"],
+                  "cropTop": crop[0], "cropBottom": crop[1]}
 
     return {
         "menu": [REPO_ROOT / m for m in menu],
@@ -139,11 +145,12 @@ def normalize_clip(src, dst, banner=None):
         # centred left-right, and lay it on the banner image. Everything in the
         # clip, animations included, is scaled the same way, so nothing moves
         # relative to anything else.
+        kept = HEIGHT - banner["cropTop"] - banner["cropBottom"]
         ch = HEIGHT - banner["height"]
-        cw = round(WIDTH * ch / HEIGHT / 2) * 2
+        cw = min(WIDTH, round(WIDTH * ch / kept / 2) * 2)
         inputs += ["-loop", "1", "-framerate", str(FPS), "-i", str(banner["image"])]
         filt = ["-filter_complex",
-                f"[0:v]{full},scale={cw}:{ch}:flags=lanczos[c];"
+                f"[0:v]{full},crop={WIDTH}:{kept}:0:{banner['cropTop']},scale={cw}:{ch}:flags=lanczos[c];"
                 f"[1:v]scale={WIDTH}:{HEIGHT},fps={FPS},setsar=1[b];"
                 f"[b][c]overlay=x={(WIDTH - cw) // 2}:y={banner['height']}:shortest=1,format=yuv420p[v]",
                 "-map", "[v]"]

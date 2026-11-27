@@ -9,6 +9,8 @@
   "promoEveryMinutes": 2,
   "banner": {
     "image": "img/banner-black-friday.png",
-    "height": 86
+    "height": 72,
+    "cropTop": 20,
+    "cropBottom": 14
   }
 }
