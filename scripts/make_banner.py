@@ -9,7 +9,7 @@
 #   drink/playlist.json has a "banner" entry).
 # -----------------------------------------------------------------------------
 # Usage: python3 scripts/make_banner.py [out.png] [title] [deal] [height]
-#   default: img/banner-black-friday.png "BLACK FRIDAY · FOLLOW US ON INSTAGRAM @MCTEAHOUSETW" "5% OFF" 86
+#   default: img/banner-black-friday.png "BLACK FRIDAY · FOLLOW @MCTEAHOUSETW" "5% OFF" 86
 #   The title shrinks to fit if it is long.
 
 import sys
@@ -24,7 +24,7 @@ PILL = (253, 218, 175)      # menu's peach header colour
 PILL_TEXT = (17, 17, 17)
 
 out = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "img/banner-black-friday.png"
-title = sys.argv[2] if len(sys.argv) > 2 else "BLACK FRIDAY · FOLLOW US ON INSTAGRAM @MCTEAHOUSETW"
+title = sys.argv[2] if len(sys.argv) > 2 else "BLACK FRIDAY · FOLLOW @MCTEAHOUSETW"
 deal = sys.argv[3] if len(sys.argv) > 3 else "5% OFF"
 h = int(sys.argv[4]) if len(sys.argv) > 4 else 86
 
