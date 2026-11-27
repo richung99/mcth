@@ -6,5 +6,9 @@
     "img/promotion-menu.mp4",
     "img/winter-promo-menu.mp4"
   ],
-  "promoEveryMinutes": 2
+  "promoEveryMinutes": 2,
+  "banner": {
+    "image": "img/banner-black-friday.png",
+    "height": 86
+  }
 }

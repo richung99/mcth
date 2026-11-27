@@ -52,3 +52,7 @@ The food TV page is a still image: `img/TV-menu-food.png`. To update it, upload 
 
 `img/promotion-menu.mp4` is the drink board, the boba stinger, the THIRTEEN screen and back. It's made by `scripts/make_thirteen_promo.sh` from `assets/thirteen/` and `img/TV-menu-drink.png`. If the board changes, rerun that script (and `scripts/make_holiday_promo.sh`) so the promos show the current board.
 
+
+### Sale banner on the drink menu
+
+`drink/playlist.json` has an optional `"banner"`: `{"image": "img/banner-black-friday.png", "height": 86}`. With it, the build shrinks every video slightly (keeping its shape, so the card flip and transitions are unchanged) and shows the banner across the top. To remove it, delete the `"banner"` entry and push. To change the text, run `python3 scripts/make_banner.py img/banner-black-friday.png "BLACK FRIDAY SALE" "5% OFF"` and push.

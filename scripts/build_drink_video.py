@@ -80,10 +80,21 @@ def load_playlist(path):
     if missing:
         sys.exit("These videos are listed in playlist.json but not in the repo: " + ", ".join(missing))
 
+    # Optional banner: {"image": "img/....png", "height": 86}. Every video is
+    # shrunk to fit below a band of that height, and the image (a full
+    # 1920x1080 frame with the banner at the top) fills the rest.
+    banner = data.get("banner")
+    if banner is not None:
+        if not isinstance(banner, dict) or not isinstance(banner.get("height"), int) \
+                or not (0 < banner["height"] < HEIGHT // 3) or not (REPO_ROOT / str(banner.get("image", ""))).is_file():
+            sys.exit('"banner" must be {"image": "<existing png>", "height": <pixels, under 360>}.')
+        banner = {"image": REPO_ROOT / banner["image"], "height": banner["height"]}
+
     return {
         "menu": [REPO_ROOT / m for m in menu],
         "promos": [REPO_ROOT / pr for pr in promos],
         "promoEveryMinutes": every,
+        "banner": banner,
     }
 
 
@@ -95,7 +106,7 @@ def run(cmd):
     return result.stdout
 
 
-def normalize_clip(src, dst):
+def normalize_clip(src, dst, banner=None):
     """
     Re-encode one clip to the shared output format.
 
@@ -115,17 +126,32 @@ def normalize_clip(src, dst):
         again (a 2s spacing made the file ~4x bigger). The page only ever jumps
         to section starts, which always get their own keyframe anyway.
     """
-    vf = (
+    full = (
         f"scale={WIDTH}:{HEIGHT}:force_original_aspect_ratio=decrease,"
         f"pad={WIDTH}:{HEIGHT}:(ow-iw)/2:(oh-ih)/2:color={BACKGROUND},"
-        f"fps={FPS},format=yuv420p,setsar=1"
+        f"fps={FPS},setsar=1"
     )
     # A still image in the playlist becomes a short video of that image
     is_still = src.suffix.lower() in (".png", ".jpg", ".jpeg")
     inputs = ["-loop", "1", "-framerate", str(FPS), "-t", str(STILL_SECONDS), "-i", str(src)] if is_still else ["-i", str(src)]
+    if banner:
+        # Shrink the whole frame (keeping its shape) to fit under the banner,
+        # centred left-right, and lay it on the banner image. Everything in the
+        # clip, animations included, is scaled the same way, so nothing moves
+        # relative to anything else.
+        ch = HEIGHT - banner["height"]
+        cw = round(WIDTH * ch / HEIGHT / 2) * 2
+        inputs += ["-loop", "1", "-framerate", str(FPS), "-i", str(banner["image"])]
+        filt = ["-filter_complex",
+                f"[0:v]{full},scale={cw}:{ch}:flags=lanczos[c];"
+                f"[1:v]scale={WIDTH}:{HEIGHT},fps={FPS},setsar=1[b];"
+                f"[b][c]overlay=x={(WIDTH - cw) // 2}:y={banner['height']}:shortest=1,format=yuv420p[v]",
+                "-map", "[v]"]
+    else:
+        filt = ["-vf", full + ",format=yuv420p"]
     run([
         "ffmpeg", "-v", "error", "-y", *inputs,
-        "-vf", vf, "-an",
+        *filt, "-an",
         "-c:v", "libx264", "-preset", "slow", "-crf", "18",
         "-profile:v", "high", "-level", "4.0",
         "-bf", "0", "-g", str(FPS * 20),
@@ -186,7 +212,7 @@ def main():
         for i, src in enumerate(dict.fromkeys(menu + promo_list)):
             dst = workdir / f"part{i:02d}.mp4"
             print(f"Encoding {src.relative_to(REPO_ROOT)} ...", flush=True)
-            normalize_clip(src, dst)
+            normalize_clip(src, dst, playlist["banner"])
             part_of[src], frames_of[src] = dst, count_frames(dst)
 
         # Lay out the whole show: N menu loops before each promo
