@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -258,6 +259,17 @@ def main():
         "sequence": entries,
     }
     SEGMENTS_PATH.write_text(json.dumps(segments, indent=2) + "\n", encoding="utf-8")
+
+    # Point the page at this exact build (…/drink_menu_loop.mp4?v=<version>).
+    # Every build then has its own address, so a TV, the browser cache or
+    # GitHub's CDN can never mix pieces of an old file with a new one.
+    page = REPO_ROOT / PAGE / "index.html"
+    if page.is_file():
+        html = page.read_text(encoding="utf-8")
+        new_html, n = re.subn(r'(src="\.\./' + re.escape(OUTPUT_VIDEO) + r')(\?v=[0-9a-f]+)?"',
+                              r'\1?v=' + segments["version"] + '"', html)
+        if n == 1 and new_html != html:
+            page.write_text(new_html, encoding="utf-8")
 
     print(f"Wrote {OUTPUT_VIDEO} ({total} frames, {total / FPS:.1f}s, menu x{n_menu} between promos) and {PAGE}/segments.json")
 
