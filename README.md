@@ -55,4 +55,4 @@ The food TV page is a still image: `img/TV-menu-food.png`. To update it, upload 
 
 ### Sale banner on the drink menu
 
-`drink/playlist.json` has an optional `"banner"`: `{"image": "img/banner-black-friday.png", "height": 86}`. With it, the build shrinks every video slightly (keeping its shape, so the card flip and transitions are unchanged) and shows the banner across the top. To remove it, delete the `"banner"` entry and push. To change the text, run `python3 scripts/make_banner.py img/banner-black-friday.png "BLACK FRIDAY SALE" "5% OFF"` and push.
+`drink/playlist.json` has an optional `"banner"`: `{"image": "img/banner-black-friday.png", "height": 86}`. With it, the build shrinks every video slightly (keeping its shape, so the card flip and transitions are unchanged) and shows the banner across the top. To remove it, delete the `"banner"` entry and push. To change the text, run `python3 scripts/make_banner.py img/banner-black-friday.png "BLACK FRIDAY SALE" "5% OFF"` (default text: "BLACK FRIDAY · FOLLOW US ON INSTAGRAM @MCTEAHOUSETW", "5% OFF") and push.
