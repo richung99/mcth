@@ -1,8 +1,8 @@
 {
   "video": "img/drink_menu_loop.mp4",
-  "version": "99c9b6cc0686",
+  "version": "b025672f2ffd",
   "fps": 30,
-  "duration": 257.8,
+  "duration": 773.4,
   "menuLoopsBetweenPromos": 7,
   "sequence": [
     {
@@ -84,6 +84,166 @@
       "source": "img/winter-promo-menu.mp4",
       "start": 246.6333,
       "end": 257.8
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 257.8,
+      "end": 274.2
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 274.2,
+      "end": 290.6
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 290.6,
+      "end": 307.0
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 307.0,
+      "end": 323.4
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 323.4,
+      "end": 339.8
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 339.8,
+      "end": 356.2
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 356.2,
+      "end": 372.6
+    },
+    {
+      "source": "img/promotion-menu.mp4",
+      "start": 372.6,
+      "end": 389.6333
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 389.6333,
+      "end": 406.0333
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 406.0333,
+      "end": 422.4333
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 422.4333,
+      "end": 438.8333
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 438.8333,
+      "end": 455.2333
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 455.2333,
+      "end": 471.6333
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 471.6333,
+      "end": 488.0333
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 488.0333,
+      "end": 504.4333
+    },
+    {
+      "source": "img/winter-promo-menu.mp4",
+      "start": 504.4333,
+      "end": 515.6
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 515.6,
+      "end": 532.0
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 532.0,
+      "end": 548.4
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 548.4,
+      "end": 564.8
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 564.8,
+      "end": 581.2
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 581.2,
+      "end": 597.6
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 597.6,
+      "end": 614.0
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 614.0,
+      "end": 630.4
+    },
+    {
+      "source": "img/promotion-menu.mp4",
+      "start": 630.4,
+      "end": 647.4333
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 647.4333,
+      "end": 663.8333
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 663.8333,
+      "end": 680.2333
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 680.2333,
+      "end": 696.6333
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 696.6333,
+      "end": 713.0333
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 713.0333,
+      "end": 729.4333
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 729.4333,
+      "end": 745.8333
+    },
+    {
+      "source": "img/instagram-menu.mp4",
+      "start": 745.8333,
+      "end": 762.2333
+    },
+    {
+      "source": "img/winter-promo-menu.mp4",
+      "start": 762.2333,
+      "end": 773.4
     }
   ]
 }

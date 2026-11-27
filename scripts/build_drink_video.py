@@ -81,6 +81,11 @@ def load_playlist(path):
     if missing:
         sys.exit("These videos are listed in playlist.json but not in the repo: " + ", ".join(missing))
 
+    # Optional: how many times to repeat the whole show inside the file
+    repeat = data.get("repeatCycles", 1)
+    if not isinstance(repeat, int) or not 1 <= repeat <= 10:
+        sys.exit('"repeatCycles" must be a whole number from 1 to 10.')
+
     # Optional banner: {"image": "img/....png", "height": 86}. Every video is
     # shrunk to fit below a band of that height, and the image (a full
     # 1920x1080 frame with the banner at the top) fills the rest.
@@ -102,6 +107,7 @@ def load_playlist(path):
         "promos": [REPO_ROOT / pr for pr in promos],
         "promoEveryMinutes": every,
         "banner": banner,
+        "repeatCycles": repeat,
     }
 
 
@@ -226,11 +232,15 @@ def main():
         # Lay out the whole show: N menu loops before each promo
         menu_frames = sum(frames_of[c] for c in menu)
         n_menu = max(1, round(playlist["promoEveryMinutes"] * 60 * FPS / menu_frames)) if promo_list else 1
-        sequence = []
+        cycle = []
         for promo in promo_list or [None]:
-            sequence += menu * n_menu
+            cycle += menu * n_menu
             if promo:
-                sequence.append(promo)
+                cycle.append(promo)
+        # Repeat the whole cycle so the file is long. Some TVs fade to black
+        # for a moment every time a video starts over, so a longer file means
+        # that happens rarely ("repeatCycles" in playlist.json, default 1).
+        sequence = cycle * playlist["repeatCycles"]
 
         joined = workdir / "joined.mp4"
         concat_clips([part_of[c] for c in sequence], joined, workdir)
@@ -263,15 +273,22 @@ def main():
     # Point the page at this exact build (…/drink_menu_loop.mp4?v=<version>).
     # Every build then has its own address, so a TV, the browser cache or
     # GitHub's CDN can never mix pieces of an old file with a new one.
+    # The poster is what the TV shows while the video (re)starts, including at
+    # every loop on some TVs, so it's the video's own first frame (banner and
+    # all) and the switch from poster to video is invisible.
+    poster = f"img/{PAGE}_menu_poster.jpg"
+    run(["ffmpeg", "-v", "error", "-y", "-i", str(out_path), "-frames:v", "1", "-q:v", "2", str(REPO_ROOT / poster)])
     page = REPO_ROOT / PAGE / "index.html"
     if page.is_file():
         html = page.read_text(encoding="utf-8")
         new_html, n = re.subn(r'(src="\.\./' + re.escape(OUTPUT_VIDEO) + r')(\?v=[0-9a-f]+)?"',
                               r'\1?v=' + segments["version"] + '"', html)
-        if n == 1 and new_html != html:
+        new_html, m = re.subn(r'poster="[^"]*"', f'poster="../{poster}?v={segments["version"]}"', new_html)
+        if n == 1 and m == 1 and new_html != html:
             page.write_text(new_html, encoding="utf-8")
 
-    print(f"Wrote {OUTPUT_VIDEO} ({total} frames, {total / FPS:.1f}s, menu x{n_menu} between promos) and {PAGE}/segments.json")
+    print(f"Wrote {OUTPUT_VIDEO} ({total} frames, {total / FPS:.1f}s, menu x{n_menu} between promos, "
+          f"{playlist['repeatCycles']} cycle(s), {out_path.stat().st_size / 1e6:.1f} MB) and {PAGE}/segments.json")
 
 
 if __name__ == "__main__":
