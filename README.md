@@ -60,3 +60,4 @@ The food TV page is a still image: `img/TV-menu-food.png`. To update it, upload 
 ### Loop length and the poster
 
 Some TVs fade to black for a moment each time a video starts over. `"repeatCycles": 3` in `drink/playlist.json` repeats the whole show three times inside the file (about 13 minutes), so that happens rarely. The page's poster image, which shows while the video restarts, is the video's own first frame (`img/drink_menu_poster.jpg`, made by the build), so it looks the same as the video, banner included.
+On top of that, `drink/player.js` lays a still copy of that first frame (`<img class="menu-cover">`) over the video just before the file ends and whenever the video stops moving (restart, waiting for data), and removes it once the video is moving again (5s into the file after a restart, where the board is still static). The TV's black fade happens underneath it, so it can't be seen. Open `drink/?debug` to see "cover up/down" in the log.

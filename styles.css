@@ -92,6 +92,20 @@ body {
 }
 
 /* Status overlay, only shown when the page is opened with ?debug */
+/* Still image laid over the video while the TV restarts it (see drink/player.js).
+   Same size/fit as the video, so it lines up exactly. */
+.menu-screen .menu-cover {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 2;
+	pointer-events: none;
+}
+
+.menu-screen .menu-cover.hidden {
+	visibility: hidden;
+}
+
 #debug {
 	position: fixed;
 	left: 12px;

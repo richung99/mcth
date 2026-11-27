@@ -284,7 +284,9 @@ def main():
         new_html, n = re.subn(r'(src="\.\./' + re.escape(OUTPUT_VIDEO) + r')(\?v=[0-9a-f]+)?"',
                               r'\1?v=' + segments["version"] + '"', html)
         new_html, m = re.subn(r'poster="[^"]*"', f'poster="../{poster}?v={segments["version"]}"', new_html)
-        if n == 1 and m == 1 and new_html != html:
+        # The still-image cover player.js lays over the video while it restarts.
+        new_html, k = re.subn(r'(class="menu-cover" src=")[^"]*"', r'\1../' + poster + '?v=' + segments["version"] + '"', new_html)
+        if n == 1 and m == 1 and k <= 1 and new_html != html:
             page.write_text(new_html, encoding="utf-8")
 
     print(f"Wrote {OUTPUT_VIDEO} ({total} frames, {total / FPS:.1f}s, menu x{n_menu} between promos, "

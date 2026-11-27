@@ -23,6 +23,44 @@
 
 	video.muted = true; // muted video is allowed to start on its own (no click needed)
 
+	// --- Cover: a still of the video's first frame, laid over the video ---------
+	// TVs fade the screen to black whenever the video restarts (every loop) or
+	// waits for data. The cover hides that: it goes up just before the end of the
+	// file and whenever the video isn't moving, and comes down only once the video
+	// is moving again. The first 7s and last 0.9s of the file are the still board,
+	// identical to the cover, so the swaps are invisible.
+	const cover = document.querySelector(".menu-cover");
+	const END_MARGIN_S = 0.4;   // cover goes up this close to the end of the file
+	const START_CLEAR_S = 5;    // after a restart, cover stays until this point (still board until 7.1s)
+	const MOVING_FOR_MS = 400;  // mid-file: cover comes down after moving this long
+	const FROZEN_MS = 1000;     // time unchanged this long = "not moving" (some TVs update currentTime coarsely)
+	let coverUp = true;
+	let coverT = -1;
+	let changedAt = 0;
+	let movingSince = 0;
+
+	function setCover(up, why) {
+		if (!cover || up === coverUp) return;
+		coverUp = up;
+		cover.classList.toggle("hidden", !up);
+		note("cover " + (up ? "up (" + why + ")" : "down") + " at " + video.currentTime.toFixed(1) + "s");
+	}
+
+	["seeking", "waiting", "emptied", "error"].forEach((ev) =>
+		video.addEventListener(ev, () => { movingSince = 0; setCover(true, ev); }));
+
+	setInterval(() => {
+		const t = video.currentTime;
+		const d = video.duration;
+		const now = Date.now();
+		if (t !== coverT) { coverT = t; changedAt = now; }
+		const moving = !video.paused && !video.error && changedAt > 0 && now - changedAt < FROZEN_MS;
+		if (!moving) { movingSince = 0; setCover(true, "not moving"); return; }
+		if (!movingSince) movingSince = now;
+		if (d && t >= d - END_MARGIN_S) { setCover(true, "end of file"); return; }
+		if (coverUp && t > 0.05 && (t < 7 ? t >= START_CLEAR_S : now - movingSince >= MOVING_FOR_MS)) setCover(false);
+	}, 100);
+
 	/** Add a line to the ?debug overlay's event log. */
 	function note(msg) {
 		if (!DEBUG) return;
